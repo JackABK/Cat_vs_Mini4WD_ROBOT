@@ -1,7 +1,7 @@
 TARGET:=FreeRTOS
 # TODO change to your ARM gcc toolchain path
-TOOLCHAIN_ROOT:=~/gcc-arm-none-eabi
-TOOLCHAIN_PATH:=$(TOOLCHAIN_ROOT)/bin
+TOOLCHARN_ROOT:=/home/smile-lab/gcc-arm-none-eabi-4_7-2013q3
+TOOLCHAIN_PATH:=$(TOOLCHARN_ROOT)/bin
 TOOLCHAIN_PREFIX:=arm-none-eabi
 
 # Optimization level, can be [0, 1, 2, 3, s].
@@ -54,6 +54,7 @@ SRC+=misc.c
 # SRC+=stm32f4xx_dma.c
 #SRC+=stm32f4xx_exti.c
 #SRC+=stm32f4xx_flash.c
+SRC+=stm32f4xx_sdio.c
 SRC+=stm32f4xx_gpio.c
 SRC+=stm32f4xx_i2c.c
 SRC+=stm32f4xx_rcc.c
@@ -72,7 +73,7 @@ CDEFS+=-DARM_MATH_CM4
 MCUFLAGS=-mcpu=cortex-m4 -mthumb -mfloat-abi=hard
 COMMONFLAGS=-O$(OPTLVL) $(DBG) -Wall
 CFLAGS=$(COMMONFLAGS) $(MCUFLAGS) $(INCLUDE) $(CDEFS)
-LDLIBS=$(TOOLCHAIN_ROOT)/arm-none-eabi/lib/armv7e-m/fpu/libc_s.a $(TOOLCHAIN_ROOT)/arm-none-eabi/lib/armv7e-m/fpu/libm.a
+LDLIBS=$(TOOLCHARN_ROOT)/arm-none-eabi/lib/armv7e-m/fpu/libc_s.a $(TOOLCHARN_ROOT)/arm-none-eabi/lib/armv7e-m/fpu/libm.a
 LDFLAGS=$(COMMONFLAGS) -fno-exceptions -ffunction-sections -fdata-sections -nostartfiles -Wl,--gc-sections,-T$(LINKER_SCRIPT) -v
 
 CC=$(TOOLCHAIN_PATH)/$(TOOLCHAIN_PREFIX)-gcc
