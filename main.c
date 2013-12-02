@@ -6,6 +6,9 @@
 #include "stm32f4xx_usart.h"
 #include "stm32f4xx_gpio.h"
 #include "stm32f4xx_sdio.h"
+#include "stm32f4xx_rcc.h"
+#include "stm32f4xx_dma.h"
+#include "misc.h"
 void init_USART3(void);
 void init_LED(void);
 void init_SDcard(void);
@@ -100,6 +103,7 @@ void init_SDcard(){
 	SDIO_InitStruct.SDIO_HardwareFlowControl=SDIO_HardwareFlowControl_Enable;
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_SDIO,ENABLE);
 	SDIO_ClockCmd(ENABLE);
+	SDIO_SetPowerState(SDIO_PowerState_ON);
 	SDIO_Init(&SDIO_InitStruct);
 }
 
@@ -126,7 +130,7 @@ void test_FPU_test(void* p) {
     ff += s;
     // TODO some other test
 	GPIO_ToggleBits( GPIOD,GPIO_Pin_13);
-    vTaskDelay(1000);
+	vTaskDelay(1000);
   }
   vTaskDelete(NULL);
 }
