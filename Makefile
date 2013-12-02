@@ -1,12 +1,14 @@
 TARGET:=FreeRTOS
 # TODO change to your ARM gcc toolchain path
-TOOLCHARN_ROOT:=/home/smile-lab/gcc-arm-none-eabi-4_7-2013q3
+TOOLCHARN_ROOT:=/home/jackabk/workspace/gcc-arm-none-eabi-4_7-2013q3
 TOOLCHAIN_PATH:=$(TOOLCHARN_ROOT)/bin
 TOOLCHAIN_PREFIX:=arm-none-eabi
 
 # Optimization level, can be [0, 1, 2, 3, s].
 OPTLVL:=0
 DBG:=-g
+
+BIN_IMAGE = ./binary/FreeRTOS.bin
 
 FREERTOS:=$(CURDIR)/FreeRTOS
 STARTUP:=$(CURDIR)/hardware
@@ -95,6 +97,10 @@ all: $(OBJ)
 	$(OBJCOPY) -O binary $(BIN_DIR)/$(TARGET).elf $(BIN_DIR)/$(TARGET).bin
 
 .PHONY: clean
+
+
+flash:                                                                                                                         
+	st-flash write $(BIN_IMAGE) 0x8000000
 
 clean:
 	rm -f $(OBJ)
