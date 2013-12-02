@@ -117,6 +117,9 @@ void test_SDcard(void* p){
 		SDIO_SendCommand(&SDIO_CmdInitStruct);
 		while(SDIO_GetFlagStatus(SDIO_FLAG_CMDACT)==SET);
 		GPIO_ToggleBits( GPIOD,GPIO_Pin_12);
+
+		/*default printf is output to USART3 , PB10(Tx) and PB11(Rx) */
+		printf("the test command is OK\n"); 
 		vTaskDelay(1000);
 	}
 	vTaskDelete(NULL);
