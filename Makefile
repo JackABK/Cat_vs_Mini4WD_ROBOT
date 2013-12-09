@@ -19,6 +19,8 @@ INCLUDE+=-I$(CURDIR)/Libraries/CMSIS/Device/ST/STM32F4xx/Include
 INCLUDE+=-I$(CURDIR)/Libraries/CMSIS/Include
 INCLUDE+=-I$(CURDIR)/Libraries/STM32F4xx_StdPeriph_Driver/inc
 INCLUDE+=-I$(CURDIR)/config
+INCLUDE+=-I$(CURDIR)/sdio
+INCLUDE+=-I$(CURDIR)/fat
 
 BUILD_DIR = $(CURDIR)/build
 BIN_DIR = $(CURDIR)/binary
@@ -27,7 +29,9 @@ BIN_DIR = $(CURDIR)/binary
 # of the same directory as their source files
 vpath %.c $(CURDIR)/Libraries/STM32F4xx_StdPeriph_Driver/src \
 	  $(CURDIR)/Libraries/syscall $(CURDIR)/hardware $(FREERTOS) \
-	  $(FREERTOS)/portable/MemMang $(FREERTOS)/portable/GCC/ARM_CM4F 
+	  $(FREERTOS)/portable/MemMang $(FREERTOS)/portable/GCC/ARM_CM4F \
+	  $(CURDIR)/sdio \
+	  $(CURDIR)/fat
 
 vpath %.s $(STARTUP)
 ASRC=startup_stm32f4xx.s
@@ -37,6 +41,22 @@ SRC+=stm32f4xx_it.c
 SRC+=system_stm32f4xx.c
 SRC+=main.c
 SRC+=syscalls.c
+
+#sdio
+SRC+=stm32f4_discovery_sdio_sd.c
+SRC+=stm32f4_discovery_sdio_sd_LowLevel.c
+
+#fat
+SRC+=fat_access.c
+SRC+=fat_cache.c
+SRC+=fat_filelib.c
+SRC+=fat_format.c
+SRC+=fat_misc.c
+SRC+=fat_string.c
+SRC+=fat_table.c
+SRC+=fat_write.c
+SRC+=example.c
+
 
 # FreeRTOS Source Files
 SRC+=port.c
@@ -51,7 +71,7 @@ SRC+=heap_4.c
 SRC+=misc.c
 #SRC+=stm32f4xx_adc.c
 #SRC+=stm32f4xx_dac.c
-# SRC+=stm32f4xx_dma.c
+SRC+=stm32f4xx_dma.c
 #SRC+=stm32f4xx_exti.c
 #SRC+=stm32f4xx_flash.c
 SRC+=stm32f4xx_sdio.c
