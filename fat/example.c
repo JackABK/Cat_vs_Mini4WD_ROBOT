@@ -11,14 +11,16 @@ int media_init()
 int media_read(unsigned long sector, unsigned char *buffer, unsigned long sector_count)
 {
     unsigned long i;
-
+	SD_Error error;
     for (i=0;i<sector_count;i++)
     {
         // ...
         // Add platform specific sector (512 bytes) read code here
         //..
+        
         while(SD_GetStatus()!=SD_TRANSFER_OK);
-	SD_ReadBlock(buffer,sector*512,512);
+	 error=SD_ReadBlock(buffer,sector*512,512);
+	while(SD_GetStatus()!=SD_TRANSFER_OK);
         sector ++;
         buffer += 512;
     }
@@ -29,6 +31,7 @@ int media_read(unsigned long sector, unsigned char *buffer, unsigned long sector
 int media_write(unsigned long sector, unsigned char *buffer, unsigned long sector_count)
 {
     unsigned long i;
+	SD_Error error;
 
     for (i=0;i<sector_count;i++)
     {
@@ -36,7 +39,8 @@ int media_write(unsigned long sector, unsigned char *buffer, unsigned long secto
         // Add platform specific sector (512 bytes) write code here
         //..
         while(SD_GetStatus()!=SD_TRANSFER_OK);
-	SD_WriteMultiBlocks(buffer,sector*512,512,1);
+	error=SD_WriteBlock(buffer,sector*512,512);
+	while(SD_GetStatus()!=SD_TRANSFER_OK);
         sector ++;
         buffer += 512;
     }
@@ -80,8 +84,8 @@ void example_fat_fs()
     fl_fclose(file);
 
     // Delete File
-    if (fl_remove("/file.bin") < 0)
-        printf("ERROR: Delete file failed\n");
+   // if (fl_remove("/file.bin") < 0)
+    //    printf("ERROR: Delete file failed\n");
 
     // List root directory
     fl_listdirectory("/");

@@ -1433,7 +1433,7 @@ SD_Error SD_WaitReadOperation(void)
   SD_Error errorstatus = SD_OK;
   uint32_t timeout;
 
-  timeout = SD_DATATIMEOUT;
+  timeout = 1000;
 
   while ((DMAEndOfTransfer == 0x00) && (TransferEnd == 0) && (TransferError == SD_OK) && (timeout > 0))
   {
@@ -1442,7 +1442,7 @@ SD_Error SD_WaitReadOperation(void)
 
   DMAEndOfTransfer = 0x00;
 
-  timeout = SD_DATATIMEOUT;
+  timeout = 1000;
 
   while(((SDIO->STA & SDIO_FLAG_RXACT)) && (timeout > 0))
   {
