@@ -1,12 +1,16 @@
 TARGET:=FreeRTOS
 # TODO change to your ARM gcc toolchain path
-TOOLCHARN_ROOT:=/home/smile-lab/gcc-arm-none-eabi-4_7-2013q3
+TOOLCHARN_ROOT:=/home/jackabk/workspace/gcc-arm-none-eabi-4_7-2013q3
 TOOLCHAIN_PATH:=$(TOOLCHARN_ROOT)/bin
 TOOLCHAIN_PREFIX:=arm-none-eabi
 
 # Optimization level, can be [0, 1, 2, 3, s].
 OPTLVL:=0
 DBG:=-g
+
+
+BIN_IMAGE = ./binary/FreeRTOS.bin
+
 
 FREERTOS:=$(CURDIR)/FreeRTOS
 STARTUP:=$(CURDIR)/hardware
@@ -21,6 +25,7 @@ INCLUDE+=-I$(CURDIR)/Libraries/STM32F4xx_StdPeriph_Driver/inc
 INCLUDE+=-I$(CURDIR)/config
 INCLUDE+=-I$(CURDIR)/sdio
 INCLUDE+=-I$(CURDIR)/fat
+INCLUDE+=-I$(CURDIR)/bmp
 
 BUILD_DIR = $(CURDIR)/build
 BIN_DIR = $(CURDIR)/binary
@@ -31,7 +36,8 @@ vpath %.c $(CURDIR)/Libraries/STM32F4xx_StdPeriph_Driver/src \
 	  $(CURDIR)/Libraries/syscall $(CURDIR)/hardware $(FREERTOS) \
 	  $(FREERTOS)/portable/MemMang $(FREERTOS)/portable/GCC/ARM_CM4F \
 	  $(CURDIR)/sdio \
-	  $(CURDIR)/fat
+	  $(CURDIR)/fat \
+	  $(CURDIR)/bmp
 
 vpath %.s $(STARTUP)
 ASRC=startup_stm32f4xx.s
@@ -41,6 +47,9 @@ SRC+=stm32f4xx_it.c
 SRC+=system_stm32f4xx.c
 SRC+=main.c
 SRC+=syscalls.c
+SRC+=bmpfile.c
+SRC+=reading_bmp.c
+SRC+=test_bmp.c
 
 #sdio
 SRC+=stm32f4_discovery_sdio_sd.c
@@ -115,6 +124,10 @@ all: $(OBJ)
 	$(OBJCOPY) -O binary $(BIN_DIR)/$(TARGET).elf $(BIN_DIR)/$(TARGET).bin
 
 .PHONY: clean
+
+
+flash:                                                                                                                                                          
+	st-flash write $(BIN_IMAGE) 0x8000000
 
 clean:
 	rm -f $(OBJ)

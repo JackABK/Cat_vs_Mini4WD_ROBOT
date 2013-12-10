@@ -8,6 +8,8 @@
 #include "stm32f4xx_sdio.h"
 #include "example.h"
 #include "reading_bmp.h"
+#include "test_bmp.h"
+#include "fat_filelib.h" 
 
 
 #define USE_FILELIB_STDIO_COMPAT_NAMES
@@ -26,7 +28,9 @@ int main(void) {
   //init_LED();
   //init_SDcard();
   example_fat_fs();
-  example_bmp();
+  //example_bmp();
+  test_bmp();
+  printf("Testing fatfs application is done.\n");
 //  ret = xTaskCreate(test_SDcard, "FPU", 512, NULL, 1, NULL);
   ret = xTaskCreate(test_FPU_test, "FPU", configMINIMAL_STACK_SIZE, NULL, 1, NULL);
 
