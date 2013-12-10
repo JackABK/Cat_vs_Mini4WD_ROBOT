@@ -6,6 +6,13 @@
 #include "stm32f4xx_usart.h"
 #include "stm32f4xx_gpio.h"
 #include "stm32f4xx_sdio.h"
+#include "example.h"
+#include "reading_bmp.h"
+
+
+#define USE_FILELIB_STDIO_COMPAT_NAMES
+
+
 void init_USART3(void);
 void init_LED(void);
 void init_SDcard(void);
@@ -16,9 +23,11 @@ int main(void) {
 
   NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
   init_USART3();
-  init_LED();
-  init_SDcard();
-  ret = xTaskCreate(test_SDcard, "FPU", 512, NULL, 1, NULL);
+  //init_LED();
+  //init_SDcard();
+  example_fat_fs();
+  example_bmp();
+//  ret = xTaskCreate(test_SDcard, "FPU", 512, NULL, 1, NULL);
   ret = xTaskCreate(test_FPU_test, "FPU", configMINIMAL_STACK_SIZE, NULL, 1, NULL);
 
   if (ret == pdTRUE) {
@@ -71,43 +80,20 @@ void vApplicationStackOverflowHook(xTaskHandle pxTask, signed char *pcTaskName) 
   taskDISABLE_INTERRUPTS();
   for(;;);
 }
+
+
+
 void init_SDcard(){
 	
-	SDIO_InitTypeDef SDIO_InitStruct;
-	GPIO_InitTypeDef GPIO_InitStruct;
-	
-	GPIO_PinAFConfig(GPIOC, GPIO_PinSource8, GPIO_AF_SDIO);
-	GPIO_PinAFConfig(GPIOC, GPIO_PinSource9, GPIO_AF_SDIO);
-	GPIO_PinAFConfig(GPIOC, GPIO_PinSource10, GPIO_AF_SDIO);
-	GPIO_PinAFConfig(GPIOC, GPIO_PinSource11, GPIO_AF_SDIO);
-	GPIO_PinAFConfig(GPIOD, GPIO_PinSource2, GPIO_AF_SDIO);
-	
-	// Setup Blue & Green LED on STM32-Discovery Board to use PWM.
-	GPIO_InitStruct.GPIO_Pin =  GPIO_Pin_8 | GPIO_Pin_9| GPIO_Pin_10| GPIO_Pin_11; //PD12->LED3 PD13->LED4 PD14->LED5 PDa5->LED6
-	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_AF;            // Alt Function - Push Pull
-	GPIO_InitStruct.GPIO_OType = GPIO_OType_PP;
-	GPIO_InitStruct.GPIO_Speed = GPIO_Speed_25MHz;
-	GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
-	GPIO_Init( GPIOC, &GPIO_InitStruct ); 
-	GPIO_InitStruct.GPIO_Pin=GPIO_Pin_2;
-	GPIO_Init( GPIOD, &GPIO_InitStruct ); 
-	
-	SDIO_InitStruct.SDIO_BusWide=SDIO_BusWide_4b;
-	SDIO_InitStruct.SDIO_ClockBypass=SDIO_ClockBypass_Disable;
-	SDIO_InitStruct.SDIO_ClockDiv=0x00;
-	SDIO_InitStruct.SDIO_ClockEdge=SDIO_ClockEdge_Rising;
-	SDIO_InitStruct.SDIO_ClockPowerSave=SDIO_ClockPowerSave_Enable;
-	SDIO_InitStruct.SDIO_HardwareFlowControl=SDIO_HardwareFlowControl_Enable;
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_SDIO,ENABLE);
-	SDIO_ClockCmd(ENABLE);
-	SDIO_Init(&SDIO_InitStruct);
+	SD_Init();
 }
-
+#if 0
 void test_SDcard(void* p){
 	SDIO_CmdInitTypeDef SDIO_CmdInitStruct;
 	for(;;){
 		SDIO_CmdStructInit(&SDIO_CmdInitStruct);
 		SDIO_CmdInitStruct.SDIO_Response=SDIO_Response_Short;
+		SDIO_CmdInitStruct.SDIO_CmdIndex
 		SDIO_CmdInitStruct.SDIO_CPSM=SDIO_CPSM_Enable;
 		SDIO_CmdInitStruct.SDIO_Wait=SDIO_Wait_No;
 		SDIO_SendCommand(&SDIO_CmdInitStruct);
@@ -116,8 +102,9 @@ void test_SDcard(void* p){
 		vTaskDelay(1000);
 	}
 	vTaskDelete(NULL);
-	
+	SD_CMD
 }
+#endif
 void test_FPU_test(void* p) {
   float ff = 1.0f;
   printf("Start FPU test task.\n");
@@ -133,7 +120,7 @@ void test_FPU_test(void* p) {
 void init_LED(void){
 	GPIO_InitTypeDef GPIO_InitStruct;
 	/* Enable GPIO C clock. */
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC|RCC_AHB1Periph_GPIOD, ENABLE);
 	// Setup Blue & Green LED on STM32-Discovery Board to use PWM.
 	GPIO_InitStruct.GPIO_Pin =  GPIO_Pin_12 | GPIO_Pin_13| GPIO_Pin_14| GPIO_Pin_15; //PD12->LED3 PD13->LED4 PD14->LED5 PDa5->LED6
 	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_OUT;            // Alt Function - Push Pull
