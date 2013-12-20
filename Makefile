@@ -21,6 +21,7 @@ INCLUDE+=-I$(CURDIR)/Libraries/STM32F4xx_StdPeriph_Driver/inc
 INCLUDE+=-I$(CURDIR)/config
 INCLUDE+=-I$(CURDIR)/sdio
 INCLUDE+=-I$(CURDIR)/fat
+INCLUDE+=-I$(CURDIR)/bmp
 
 BUILD_DIR = $(CURDIR)/build
 BIN_DIR = $(CURDIR)/binary
@@ -31,7 +32,9 @@ vpath %.c $(CURDIR)/Libraries/STM32F4xx_StdPeriph_Driver/src \
 	  $(CURDIR)/Libraries/syscall $(CURDIR)/hardware $(FREERTOS) \
 	  $(FREERTOS)/portable/MemMang $(FREERTOS)/portable/GCC/ARM_CM4F \
 	  $(CURDIR)/sdio \
-	  $(CURDIR)/fat
+	  $(CURDIR)/fat \
+	  $(CURDIR)/bmp
+
 
 vpath %.s $(STARTUP)
 ASRC=startup_stm32f4xx.s
@@ -41,6 +44,7 @@ SRC+=stm32f4xx_it.c
 SRC+=system_stm32f4xx.c
 SRC+=main.c
 SRC+=syscalls.c
+
 
 #sdio
 SRC+=stm32f4_discovery_sdio_sd.c
@@ -56,6 +60,10 @@ SRC+=fat_string.c
 SRC+=fat_table.c
 SRC+=fat_write.c
 SRC+=example.c
+
+#bmp
+SRC+=bmpfile.c
+SRC+=reading_bmp.c
 
 
 # FreeRTOS Source Files

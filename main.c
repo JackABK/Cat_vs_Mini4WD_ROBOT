@@ -7,7 +7,7 @@
 #include "stm32f4xx_gpio.h"
 #include "stm32f4xx_sdio.h"
 #include "example.h"
-#include "reading_bmp.h"
+
 
 
 #define USE_FILELIB_STDIO_COMPAT_NAMES
@@ -15,18 +15,16 @@
 
 void init_USART3(void);
 void init_LED(void);
-void init_SDcard(void);
+
 void test_FPU_test(void* p);
-void test_SDcard(void* p);
+
 int main(void) {
   uint8_t ret = pdFALSE;
 
   NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
   init_USART3();
-  //init_LED();
-  //init_SDcard();
-  example_fat_fs();
-  example_bmp();
+  init_LED();
+ 
 //  ret = xTaskCreate(test_SDcard, "FPU", 512, NULL, 1, NULL);
   ret = xTaskCreate(test_FPU_test, "FPU", configMINIMAL_STACK_SIZE, NULL, 1, NULL);
 
@@ -83,10 +81,7 @@ void vApplicationStackOverflowHook(xTaskHandle pxTask, signed char *pcTaskName) 
 
 
 
-void init_SDcard(){
-	
-	SD_Init();
-}
+
 #if 0
 void test_SDcard(void* p){
 	SDIO_CmdInitTypeDef SDIO_CmdInitStruct;
