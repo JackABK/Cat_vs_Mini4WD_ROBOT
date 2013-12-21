@@ -1,13 +1,12 @@
 #include "stm32f4xx.h"
 #include "FreeRTOS.h"
 #include "task.h"
-#include "math.h"
-#include "stdio.h"
 #include "stm32f4xx_usart.h"
 #include "stm32f4xx_gpio.h"
-#include "stm32f4xx_sdio.h"
-#include "example.h"
+#include "stm32f4xx_exti.h"
 
+#include "example.h"
+#include "servo_motor.h"
 
 
 #define USE_FILELIB_STDIO_COMPAT_NAMES
@@ -15,28 +14,32 @@
 
 void init_USART3(void);
 void init_LED(void);
+//void init_Button(void);
 
 void test_FPU_test(void* p);
 
+
+
 int main(void) {
-  uint8_t ret = pdFALSE;
+	uint8_t ret = pdFALSE;
 
-  NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
-  init_USART3();
-  init_LED();
- 
-//  ret = xTaskCreate(test_SDcard, "FPU", 512, NULL, 1, NULL);
-  ret = xTaskCreate(test_FPU_test, "FPU", configMINIMAL_STACK_SIZE, NULL, 1, NULL);
+	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
+	init_USART3();
+	init_LED();
+ 	servo_init();
+	ultra_sound_init();
+	//init_Button();
+	ret = xTaskCreate(test_FPU_test, "FPU", configMINIMAL_STACK_SIZE, NULL, 1, NULL);
 
-  if (ret == pdTRUE) {
-    printf("System Started!\n");
-    vTaskStartScheduler();  // should never return
-  } else {
-    printf("System Error!\n");
-    // --TODO blink some LEDs to indicates fatal system error
-  }
+	if (ret == pdTRUE) {
+		printf("System Started!\n");
+		vTaskStartScheduler();  // should never return
+	} else {
+		printf("System Error!\n");
+		// --TODO blink some LEDs to indicates fatal system error
+	}
 
-  for (;;);
+	for (;;);
 }
 
 void vApplicationTickHook(void) {
@@ -53,8 +56,8 @@ void vApplicationTickHook(void) {
    to query the size of free heap space that remains (although it does not
    provide information on how the remaining heap might be fragmented). */
 void vApplicationMallocFailedHook(void) {
-  taskDISABLE_INTERRUPTS();
-  for(;;);
+	taskDISABLE_INTERRUPTS();
+	for(;;);
 }
 
 /* vApplicationIdleHook() will only be called if configUSE_IDLE_HOOK is set
@@ -80,26 +83,8 @@ void vApplicationStackOverflowHook(xTaskHandle pxTask, signed char *pcTaskName) 
 }
 
 
+unsigned char fTest=0;
 
-
-#if 0
-void test_SDcard(void* p){
-	SDIO_CmdInitTypeDef SDIO_CmdInitStruct;
-	for(;;){
-		SDIO_CmdStructInit(&SDIO_CmdInitStruct);
-		SDIO_CmdInitStruct.SDIO_Response=SDIO_Response_Short;
-		SDIO_CmdInitStruct.SDIO_CmdIndex
-		SDIO_CmdInitStruct.SDIO_CPSM=SDIO_CPSM_Enable;
-		SDIO_CmdInitStruct.SDIO_Wait=SDIO_Wait_No;
-		SDIO_SendCommand(&SDIO_CmdInitStruct);
-		while(SDIO_GetFlagStatus(SDIO_FLAG_CMDACT)==SET);
-		GPIO_ToggleBits( GPIOD,GPIO_Pin_12);
-		vTaskDelay(1000);
-	}
-	vTaskDelete(NULL);
-	SD_CMD
-}
-#endif
 void test_FPU_test(void* p) {
   float ff = 1.0f;
   printf("Start FPU test task.\n");
@@ -108,10 +93,53 @@ void test_FPU_test(void* p) {
     ff += s;
     // TODO some other test
 	GPIO_ToggleBits( GPIOD,GPIO_Pin_13);
-    vTaskDelay(1000);
+#if (1)
+	if(fTest){
+		servo_operate(2,30);
+	}
+	else{
+		servo_operate(2,-30);
+	}
+	fTest^=1;
+#endif
+    vTaskDelay(2000);
   }
   vTaskDelete(NULL);
 }
+#if (0)
+void init_Button(void){
+	GPIO_InitTypeDef GPIO_InitStruct;
+	EXTI_InitTypeDef EXTI_InitStruct;
+	NVIC_InitTypeDef NVIC_InitStructure;
+	/* Enable GPIO C clock. */
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+	// Setup Blue & Green LED on STM32-Discovery Board to use PWM.
+	GPIO_InitStruct.GPIO_Pin =  GPIO_Pin_0 ;
+	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_IN;            // Alt Function - Push Pull
+	GPIO_InitStruct.GPIO_OType = GPIO_OType_PP;
+	GPIO_InitStruct.GPIO_Speed = GPIO_Speed_100MHz;
+	GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_Init( GPIOA, &GPIO_InitStruct ); 
+	
+	
+	EXTI_InitStruct.EXTI_Line = EXTI_Line0;
+	EXTI_InitStruct.EXTI_Mode = EXTI_Mode_Interrupt;
+	EXTI_InitStruct.EXTI_Trigger = EXTI_Trigger_Rising;
+	EXTI_InitStruct.EXTI_LineCmd = ENABLE;
+	EXTI_Init(&EXTI_InitStruct);
+	NVIC_InitStructure.NVIC_IRQChannel = EXTI0_IRQn;
+	 NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;
+	 NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;
+	 NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	 NVIC_Init(&NVIC_InitStructure);
+
+	 
+}
+void EXTI0_IRQHandler(){
+	EXTI_ClearITPendingBit(EXTI_Line0);
+	GPIO_ToggleBits( GPIOD,GPIO_Pin_14);
+}
+#endif
 void init_LED(void){
 	GPIO_InitTypeDef GPIO_InitStruct;
 	/* Enable GPIO C clock. */

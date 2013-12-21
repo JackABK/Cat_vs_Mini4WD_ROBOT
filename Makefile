@@ -12,6 +12,10 @@ FREERTOS:=$(CURDIR)/FreeRTOS
 STARTUP:=$(CURDIR)/hardware
 LINKER_SCRIPT:=$(CURDIR)/Utilities/stm32_flash.ld
 
+
+BIN_IMAGE = ./binary/FreeRTOS.bin
+
+
 INCLUDE=-I$(CURDIR)/hardware
 INCLUDE+=-I$(FREERTOS)/include
 INCLUDE+=-I$(FREERTOS)/portable/GCC/ARM_CM4F
@@ -22,6 +26,8 @@ INCLUDE+=-I$(CURDIR)/config
 INCLUDE+=-I$(CURDIR)/sdio
 INCLUDE+=-I$(CURDIR)/fat
 INCLUDE+=-I$(CURDIR)/bmp
+INCLUDE+=-I$(CURDIR)/cat_lib
+
 
 BUILD_DIR = $(CURDIR)/build
 BIN_DIR = $(CURDIR)/binary
@@ -33,7 +39,8 @@ vpath %.c $(CURDIR)/Libraries/STM32F4xx_StdPeriph_Driver/src \
 	  $(FREERTOS)/portable/MemMang $(FREERTOS)/portable/GCC/ARM_CM4F \
 	  $(CURDIR)/sdio \
 	  $(CURDIR)/fat \
-	  $(CURDIR)/bmp
+	  $(CURDIR)/bmp \
+	  $(CURDIR)/cat_lib
 
 
 vpath %.s $(STARTUP)
@@ -65,6 +72,10 @@ SRC+=example.c
 SRC+=bmpfile.c
 SRC+=reading_bmp.c
 
+#cat_lib
+SRC+=servo_motor.c
+SRC+=ultrasound.c
+
 
 # FreeRTOS Source Files
 SRC+=port.c
@@ -80,7 +91,7 @@ SRC+=misc.c
 #SRC+=stm32f4xx_adc.c
 #SRC+=stm32f4xx_dac.c
 SRC+=stm32f4xx_dma.c
-#SRC+=stm32f4xx_exti.c
+SRC+=stm32f4xx_exti.c
 #SRC+=stm32f4xx_flash.c
 SRC+=stm32f4xx_sdio.c
 SRC+=stm32f4xx_gpio.c
@@ -123,6 +134,9 @@ all: $(OBJ)
 	$(OBJCOPY) -O binary $(BIN_DIR)/$(TARGET).elf $(BIN_DIR)/$(TARGET).bin
 
 .PHONY: clean
+
+flash:                                                                                                                                                          
+	st-flash write $(BIN_IMAGE) 0x8000000
 
 clean:
 	rm -f $(OBJ)
