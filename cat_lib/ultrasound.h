@@ -5,7 +5,9 @@ typedef enum{
 
 
 
+unsigned long Get_Distance(void);
 
+void ultra_sound_init(void);
 
 
 

@@ -86,7 +86,7 @@ SRC+=timers.c
 SRC+=heap_4.c
 
 # Standard Peripheral Source Files
-# SRC+=stm32f4xx_syscfg.c
+SRC+=stm32f4xx_syscfg.c
 SRC+=misc.c
 #SRC+=stm32f4xx_adc.c
 #SRC+=stm32f4xx_dac.c

@@ -1,6 +1,7 @@
 #include "FreeRTOS.h"
 #include "timers.h"
 #include "ultrasound.h"
+#include "stm32f4xx_syscfg.h"
 #include "stm32f4xx_gpio.h"
 #include "stm32f4xx_tim.h"
 
@@ -13,7 +14,7 @@
 
 static ultsound_state_err_t ultsound_state=ULTSOUND_OK;
 
-
+static unsigned long distance;
 static unsigned int pulse_width;
 xTimerHandle servoTimers;
 unsigned char fTrigger=0;
@@ -29,20 +30,21 @@ void init_echo(void);
 void issue_sound_pulse(){
 	fTrigger=1;
 	TIM_SetCounter(TIM3,11);
-	
 	TIM_Cmd(TIM3, ENABLE);
 	GPIO_WriteBit(GPIO_PORT_TRIGGER,GPIO_PIN_TRIGGER,Bit_SET);
 	
 }
 void UltrasoundPolling(){
-	
-	issue_sound_pulse();
+	if(ultsound_state==ULTSOUND_OK){
+		ultsound_state=ULTSOUND_BUSY;
+		issue_sound_pulse();
+	}
 	
 }
 
 void ultra_sound_init(){
 	
-	servoTimers=xTimerCreate("ultrasound",	 ( 10 ), pdTRUE, ( void * ) 1,  UltrasoundPolling	 );
+	servoTimers=xTimerCreate("ultrasound",	 ( 1000 ), pdTRUE, ( void * ) 1,  UltrasoundPolling	 );
 	xTimerStart( servoTimers, 0 );
 	///////////////////////////
 	init_trigger();
@@ -96,11 +98,19 @@ void init_echo(){
 	GPIO_InitTypeDef GPIO_InitStruct;
 	EXTI_InitTypeDef EXTI_InitStruct;
 	NVIC_InitTypeDef NVIC_InitStructure;
-	/* Enable GPIO C clock. */
+	
+	SYSCFG_DeInit();
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
+
+	
+	SYSCFG_EXTILineConfig( EXTI_PortSourceGPIOB,EXTI_PinSource0);
+	
+	
+	
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
-	// Setup Blue & Green LED on STM32-Discovery Board to use PWM.
+
 	GPIO_InitStruct.GPIO_Pin =  GPIO_PIN_ECHO ;
-	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_IN;            // Alt Function - Push Pull
+	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_IN;
 	GPIO_InitStruct.GPIO_OType = GPIO_OType_PP;
 	GPIO_InitStruct.GPIO_Speed = GPIO_Speed_100MHz;
 	GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
@@ -121,13 +131,14 @@ void init_echo(){
 	 
 }
 void EXTI0_IRQHandler(){
-	unsigned long temp;
+	
+	TIM_Cmd(TIM3, DISABLE);
 	if(EXTI_GetITStatus(EXTI_Line0)!=RESET){
 		EXTI_ClearITPendingBit(EXTI_Line0);
 		if(ultsound_state==ULTSOUND_BUSY){
 			//distance update
-			temp=TIM_GetCounter(TIM3);
-
+			distance=0xFFFF-TIM_GetCounter(TIM3);
+			
 			ultsound_state=ULTSOUND_OK;
 		}
 	}
@@ -139,7 +150,7 @@ void TIM3_IRQHandler(){
 	if(TIM_GetITStatus(TIM3,TIM_IT_Update)!=RESET){
 		
 		TIM_Cmd(TIM3, DISABLE);
-		GPIO_WriteBit(GPIO_PORT_TRIGGER,GPIO_PIN_ECHO,Bit_RESET);
+		GPIO_WriteBit(GPIO_PORT_TRIGGER,GPIO_PIN_TRIGGER,Bit_RESET);
 		TIM_ClearITPendingBit( TIM3, TIM_IT_Update);
 		if(fTrigger){
 			fDistance=1;
@@ -152,9 +163,13 @@ void TIM3_IRQHandler(){
 		else{
 			fDistance=0;//shouldnt enter here
 			TIM_Cmd(TIM3, DISABLE);
+			ultsound_state=ULTSOUND_OK;
 		}
 		
 	}
 	
 }
 
+unsigned long Get_Distance(){
+	return distance;
+}

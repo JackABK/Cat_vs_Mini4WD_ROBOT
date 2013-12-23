@@ -28,6 +28,7 @@ int main(void) {
 	init_LED();
  	servo_init();
 	ultra_sound_init();
+	
 	//init_Button();
 	ret = xTaskCreate(test_FPU_test, "FPU", configMINIMAL_STACK_SIZE, NULL, 1, NULL);
 
@@ -93,6 +94,7 @@ void test_FPU_test(void* p) {
     ff += s;
     // TODO some other test
 	GPIO_ToggleBits( GPIOD,GPIO_Pin_13);
+	printf("%ld\n",Get_Distance() );
 #if (1)
 	if(fTest){
 		servo_operate(2,30);
