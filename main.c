@@ -104,7 +104,7 @@ void test_FPU_test(void* p) {
 	}
 	fTest^=1;
 #endif
-    vTaskDelay(2000);
+    vTaskDelay(1000);
   }
   vTaskDelete(NULL);
 }
