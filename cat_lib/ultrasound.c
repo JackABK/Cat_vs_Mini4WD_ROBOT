@@ -14,7 +14,7 @@
 
 static ultsound_state_err_t ultsound_state=ULTSOUND_OK;
 
-static unsigned long distance;
+unsigned long distance;
 static unsigned int pulse_width;
 xTimerHandle ultrasoundTimers;
 unsigned char fTrigger=0;
@@ -67,7 +67,7 @@ void ultra_sound_init(){
 	TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
 	//TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);
-	//TIM_PrescalerConfig(TIM3,84-1,TIM_PSCReloadMode_Immediate);
+	TIM_PrescalerConfig(TIM3,84-1,TIM_PSCReloadMode_Immediate);
 	
 	/*Added by YINCHEN*/
 	
@@ -86,11 +86,12 @@ void ultra_sound_init(){
 	   ------------------------------------------------------------ */
 	 
 	TIM_ICInitStructure.TIM_Channel = TIM_Channel_2;
-	TIM_ICInitStructure.TIM_ICPolarity = TIM_ICPolarity_Rising;
+	TIM_ICInitStructure.TIM_ICPolarity = TIM_ICPolarity_BothEdge;
 	TIM_ICInitStructure.TIM_ICSelection = TIM_ICSelection_DirectTI;
 	TIM_ICInitStructure.TIM_ICPrescaler = TIM_ICPSC_DIV1;
 	TIM_ICInitStructure.TIM_ICFilter = 0x0;
-	
+	TIM_ICInit(TIM3,&TIM_ICInitStructure);
+#if (0)
 	TIM_PWMIConfig(TIM3, &TIM_ICInitStructure);
 	/* Select the TIM3 Input Trigger: TI2FP2 */
 	TIM_SelectInputTrigger(TIM3, TIM_TS_TI2FP2);
@@ -101,11 +102,15 @@ void ultra_sound_init(){
 	/* TIM enable counter */
 	TIM_Cmd(TIM3, ENABLE);
 	/* Enable the CC2 Interrupt Request */
-	TIM_ITConfig(TIM3, TIM_IT_CC1, ENABLE);
+	TIM_ITConfig(TIM3, TIM_IT_CC2, ENABLE);
+#endif
+	TIM_Cmd(TIM3, ENABLE);
+
+	TIM_ITConfig(TIM3, TIM_IT_CC2, ENABLE);
 
 	init_trigger();
 	
-	ultrasoundTimers=xTimerCreate("ultrasound",	 ( 1000 ), pdTRUE, ( void * ) 1,  UltrasoundPolling	 );
+	ultrasoundTimers=xTimerCreate("ultrasound",( 1000 ), pdTRUE, ( void * ) 1,  UltrasoundPolling	 );
 	xTimerStart( ultrasoundTimers, 0 );
 	
 //	init_echo();
@@ -183,15 +188,34 @@ void EXTI0_IRQHandler(){
 	
 }
 #endif
+
+static unsigned long IC3ReadValue1,IC3ReadValue2;
+static unsigned char CaptureNumber=0;
 void TIM3_IRQHandler(void){
 	/* Clear TIM3 Capture compare interrupt pending bit */
-	TIM_ClearITPendingBit(TIM3, TIM_IT_CC1);
+	TIM_ClearITPendingBit(TIM3, TIM_IT_CC2);
 	/* Get the Input Capture value */
-	
+	if(CaptureNumber == 0){
+		IC3ReadValue1=TIM_GetCapture2(TIM3);
+		CaptureNumber=1;
+		
+	}
+	else if(CaptureNumber ==1){
+		IC3ReadValue2=TIM_GetCapture2(TIM3);
+		if(IC3ReadValue2>IC3ReadValue1){
+			distance = (IC3ReadValue2 - IC3ReadValue1); 
+		}
+		else{
+			distance = (0xFFFF-IC3ReadValue1) + IC3ReadValue2; 
+		}
+		
+		CaptureNumber=0;
+		
+	}
 	/* Duty cycle computation */
-	distance = TIM_GetCapture1(TIM3)*1000000/SystemCoreClock;
-	 
-	
+	//distance = TIM_GetCapture2(TIM3)/(SystemCoreClock/1000000/4);//(unit:us) APB Prescalar = 4
+	//pulse_width=TIM_GetCounter(TIM3);
+	//__NOP();
 }
 
 #if (0)
