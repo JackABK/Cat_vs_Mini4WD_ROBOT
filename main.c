@@ -107,34 +107,38 @@ void motor_test(void* p){
 		switch(state_motor_test){
 			case 0:
 				//forward left
-				servo_operate(3,-30);
+				servo_operate(3,-15);
+				vTaskDelay(2000);
 				forward_motor();
 				state_motor_test=1;
 				
 				break;
 			case 1:
 				//back right
-				servo_operate(3,30);
+				servo_operate(3,15);
+				vTaskDelay(2000);
 				backward_motor();
 				state_motor_test=2;
 				break;
 			case 2:
 				//forward right
-				servo_operate(3,30);
+				servo_operate(3,15);
+				vTaskDelay(2000);
 				forward_motor();
 				state_motor_test=3;
 				break;
 
 			case 3:
 				//back left
-				servo_operate(3,-30);
+				servo_operate(3,-15);
+				vTaskDelay(2000);
 				backward_motor();
 				state_motor_test=0;
 				break;
 		}
-		vTaskDelay(1500);
+		vTaskDelay(2000);
 		stop_motor();
-		vTaskDelay(1500);
+		vTaskDelay(4000);
 	}
 }
 void test_FPU_test(void* p) {
@@ -145,7 +149,7 @@ void test_FPU_test(void* p) {
     ff += s;
     // TODO some other test
 	GPIO_ToggleBits( GPIOD,GPIO_Pin_13);
-	//printf("%ld\n",Get_Distance() );
+	printf("%ld %ld\n\r",Get_CH1Distance(),Get_CH2Distance() );
 #if (0)
 	if(fTest){
 		servo_operate(2,30);
