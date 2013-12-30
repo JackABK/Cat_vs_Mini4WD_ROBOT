@@ -5,8 +5,8 @@
 #include "stm32f4xx_tim.h"
 
 
-#define GPIO_PORT_SERVO GPIOB
-#define GPIO_PIN_SERVO GPIO_Pin_0
+#define GPIO_PORT_SERVO GPIOA
+#define GPIO_PIN_SERVO GPIO_Pin_1
 
 
 static servo_err_t servo_state=SERVO_OK;
@@ -63,14 +63,14 @@ void servo_init(){
 	servoTimers=xTimerCreate("Servo",	 ( 10 ), pdTRUE, ( void * ) 1,  ServoPolling	 );
 	xTimerStart( servoTimers, 0 );
 	///////////////////////////
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
-	GPIO_InitStruct.GPIO_Pin =  GPIO_Pin_0 ; //PD12->LED3 PD13->LED4 PD14->LED5 PDa5->LED6
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+	GPIO_InitStruct.GPIO_Pin =  GPIO_PIN_SERVO ; //PD12->LED3 PD13->LED4 PD14->LED5 PDa5->LED6
 	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_OUT;            // Alt Function - Push Pull
 	GPIO_InitStruct.GPIO_OType = GPIO_OType_PP;
 	GPIO_InitStruct.GPIO_Speed = GPIO_Speed_100MHz;
 	GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
-	GPIO_Init( GPIOB, &GPIO_InitStruct ); 
-	GPIO_WriteBit(GPIOB,GPIO_Pin_0,Bit_RESET);
+	GPIO_Init( GPIO_PORT_SERVO, &GPIO_InitStruct ); 
+	GPIO_WriteBit(GPIO_PORT_SERVO,GPIO_PIN_SERVO,Bit_RESET);
 	TIM_DeInit(TIM2);
 	/* TIM2 clock enable */
 	TIM_InternalClockConfig(TIM2);

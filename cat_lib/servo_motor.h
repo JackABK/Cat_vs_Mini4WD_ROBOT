@@ -3,5 +3,5 @@ typedef enum{
 	SERVO_OK
 }servo_err_t;
 
-servo_err_t	servo_operate();  
+servo_err_t servo_operate(int ,int );
 
