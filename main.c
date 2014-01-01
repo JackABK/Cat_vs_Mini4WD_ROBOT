@@ -6,8 +6,8 @@
 #include "stm32f4xx_exti.h"
 
 #include "example.h"
-#include "servo_motor.h"
 
+#include "car_behavior.h"
 
 #define USE_FILELIB_STDIO_COMPAT_NAMES
 
@@ -15,9 +15,7 @@
 void init_USART3(void);
 void init_LED(void);
 
-void forward_motor(void);
-void backward_motor(void);
-void stop_motor(void);
+
 
 void test_FPU_test(void* p);
 void motor_test(void* p);
@@ -29,16 +27,11 @@ int main(void) {
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
 	init_USART3();
 	init_LED();
-	init_motor();
- 	servo_init();
-	ultra_sound_init();
-
-
+	init_car();
+ 	
 	
-		
-	//init_Button();
 	
-	xTaskCreate(motor_test, "motor", configMINIMAL_STACK_SIZE, NULL, 1, NULL);
+	
 	ret = xTaskCreate(test_FPU_test, "FPU", configMINIMAL_STACK_SIZE, NULL, 1, NULL);
 
 	if (ret == pdTRUE) {
@@ -95,143 +88,18 @@ void vApplicationStackOverflowHook(xTaskHandle pxTask, signed char *pcTaskName) 
 
 unsigned char fTest=0;
 
-static unsigned char state_motor_test=0;
-void motor_test(void* p){
-	
-	vTaskDelay(1000);
-	servo_operate(3,0);
-	vTaskDelay(1000);
-		
-	
-	while(1){
-		switch(state_motor_test){
-			case 0:
-				//forward left
-				servo_operate(3,-15);
-				vTaskDelay(2000);
-				forward_motor();
-				state_motor_test=1;
-				
-				break;
-			case 1:
-				//back right
-				servo_operate(3,15);
-				vTaskDelay(2000);
-				backward_motor();
-				state_motor_test=2;
-				break;
-			case 2:
-				//forward right
-				servo_operate(3,15);
-				vTaskDelay(2000);
-				forward_motor();
-				state_motor_test=3;
-				break;
-
-			case 3:
-				//back left
-				servo_operate(3,-15);
-				vTaskDelay(2000);
-				backward_motor();
-				state_motor_test=0;
-				break;
-		}
-		vTaskDelay(2000);
-		stop_motor();
-		vTaskDelay(4000);
-	}
-}
 void test_FPU_test(void* p) {
-  float ff = 1.0f;
   printf("Start FPU test task.\n");
   for (;;) {
-    float s = sinf(ff);
-    ff += s;
-    // TODO some other test
-	GPIO_ToggleBits( GPIOD,GPIO_Pin_13);
-	printf("%ld %ld\n\r",Get_CH1Distance(),Get_CH2Distance() );
-#if (0)
-	if(fTest){
-		servo_operate(2,30);
-	}
-	else{
-		servo_operate(2,-30);
-	}
-	fTest^=1;
-#endif
+  
+	printf("%ld %ld %ld %ld\n\r",Get_CH1Distance(),Get_CH2Distance() ,Get_CH3Distance(),Get_CH4Distance() );
+
     vTaskDelay(1000);
   }
   vTaskDelete(NULL);
 }
-#if (0)
-void init_Button(void){
-	GPIO_InitTypeDef GPIO_InitStruct;
-	EXTI_InitTypeDef EXTI_InitStruct;
-	NVIC_InitTypeDef NVIC_InitStructure;
-	/* Enable GPIO C clock. */
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
-	// Setup Blue & Green LED on STM32-Discovery Board to use PWM.
-	GPIO_InitStruct.GPIO_Pin =  GPIO_Pin_0 ;
-	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_IN;            // Alt Function - Push Pull
-	GPIO_InitStruct.GPIO_OType = GPIO_OType_PP;
-	GPIO_InitStruct.GPIO_Speed = GPIO_Speed_100MHz;
-	GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
-	GPIO_Init( GPIOA, &GPIO_InitStruct ); 
-	
-	
-	EXTI_InitStruct.EXTI_Line = EXTI_Line0;
-	EXTI_InitStruct.EXTI_Mode = EXTI_Mode_Interrupt;
-	EXTI_InitStruct.EXTI_Trigger = EXTI_Trigger_Rising;
-	EXTI_InitStruct.EXTI_LineCmd = ENABLE;
-	EXTI_Init(&EXTI_InitStruct);
-	NVIC_InitStructure.NVIC_IRQChannel = EXTI0_IRQn;
-	 NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;
-	 NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;
-	 NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-	 NVIC_Init(&NVIC_InitStructure);
 
-	 
-}
-void EXTI0_IRQHandler(){
-	EXTI_ClearITPendingBit(EXTI_Line0);
-	GPIO_ToggleBits( GPIOD,GPIO_Pin_14);
-}
-#endif
 
-#define MOTOR_INPUT_PORT GPIOA
-#define MOTOR_INPUT_PIN1 GPIO_Pin_2
-#define MOTOR_INPUT_PIN2 GPIO_Pin_3
-
-void init_motor(void){
-	GPIO_InitTypeDef GPIO_InitStruct;
-	/* Enable GPIO C clock. */
-	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
-	// Setup Blue & Green LED on STM32-Discovery Board to use PWM.
-	GPIO_InitStruct.GPIO_Pin =  MOTOR_INPUT_PIN1|MOTOR_INPUT_PIN2;
-	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_OUT;
-	GPIO_InitStruct.GPIO_OType = GPIO_OType_PP;
-	GPIO_InitStruct.GPIO_Speed = GPIO_Speed_100MHz;
-	GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
-	GPIO_Init( MOTOR_INPUT_PORT, &GPIO_InitStruct ); 
-	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN1,Bit_RESET);
-	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN2,Bit_RESET);
-	
-}
-void forward_motor(void){
-	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN1,Bit_SET);
-	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN2,Bit_RESET);
-	
-}
-void stop_motor(void){
-	servo_operate(3,0);
-	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN1,Bit_RESET);
-	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN2,Bit_RESET);
-}
-void backward_motor(void){
-	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN1,Bit_RESET);
-	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN2,Bit_SET);
-	
-}
 
 void init_LED(void){
 	GPIO_InitTypeDef GPIO_InitStruct;

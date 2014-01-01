@@ -8,7 +8,11 @@ typedef enum{
 unsigned long Get_CH1Distance();
 
 unsigned long Get_CH2Distance();
-void ultra_sound_init(void);
+unsigned long Get_CH3Distance();
+
+unsigned long Get_CH4Distance();
+
+void ultra_sound_init();
 
 
 

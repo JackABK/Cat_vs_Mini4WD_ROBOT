@@ -18,6 +18,7 @@ static unsigned int pulse_width;
 xTimerHandle servoTimers;
 TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
 
+static unsigned char count4ending=0;
 
 void issue_servo_pulse(int angle){
 	
@@ -30,14 +31,14 @@ void issue_servo_pulse(int angle){
 	GPIO_WriteBit(GPIO_PORT_SERVO,GPIO_PIN_SERVO,Bit_SET);
 }
 void ServoPolling(){
-	static unsigned char count=0;
+	
 	if(servo_angle==target_angle){
 		if(servo_state==SERVO_OK)
 			return;
 		else if(servo_state==SERVO_BUSY){
-			count++;
-			if(count==50){
-				count=0;
+			count4ending++;
+			if(count4ending==50){
+				count4ending=0;
 				servo_state=SERVO_OK;
 			}
 		}
@@ -76,7 +77,7 @@ void servo_init(){
 	GPIO_InitStruct.GPIO_Pin =  GPIO_Pin_1 ; //PD12->LED3 PD13->LED4 PD14->LED5 PDa5->LED6
 	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_OUT;            // Alt Function - Push Pull
 	GPIO_InitStruct.GPIO_OType = GPIO_OType_PP;
-	GPIO_InitStruct.GPIO_Speed = GPIO_Speed_100MHz;
+	GPIO_InitStruct.GPIO_Speed = GPIO_Speed_2MHz;
 	GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
 	GPIO_Init( GPIOA, &GPIO_InitStruct ); 
 	GPIO_WriteBit(GPIOA,GPIO_Pin_1,Bit_RESET);
@@ -110,13 +111,10 @@ void servo_init(){
 	
 }
 
-servo_err_t servo_operate(int agility,int angle){
+void servo_operate(int agility,int angle){
 	
-	if(servo_state==SERVO_OK)
-		servo_state=SERVO_BUSY;
-	else
-		return servo_state;
-
+	servo_state=SERVO_BUSY;
+	count4ending=0;
 	target_angle=angle;
 	servo_agility=agility;
 } 

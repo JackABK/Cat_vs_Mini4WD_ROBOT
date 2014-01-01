@@ -75,7 +75,7 @@ SRC+=reading_bmp.c
 #cat_lib
 SRC+=servo_motor.c
 SRC+=ultrasound.c
-
+SRC+=car_behavior.c
 
 # FreeRTOS Source Files
 SRC+=port.c
