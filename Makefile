@@ -1,6 +1,6 @@
 TARGET:=FreeRTOS
 # TODO change to your ARM gcc toolchain path
-TOOLCHARN_ROOT:=/home/smile-lab/gcc-arm-none-eabi-4_7-2013q3
+TOOLCHARN_ROOT:=../../gcc-arm-none-eabi-4_7-2013q3
 TOOLCHAIN_PATH:=$(TOOLCHARN_ROOT)/bin
 TOOLCHAIN_PREFIX:=arm-none-eabi
 
