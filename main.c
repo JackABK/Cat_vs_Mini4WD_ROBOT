@@ -6,6 +6,7 @@
 #include "stm32f4xx_usart.h"
 #include "stm32f4xx_gpio.h"
 #include "stm32f4xx_sdio.h"
+<<<<<<< HEAD
 #include "example.h"
 #include "reading_bmp.h"
 #include "test_bmp.h"
@@ -15,6 +16,11 @@
 #define USE_FILELIB_STDIO_COMPAT_NAMES
 
 
+=======
+#include "stm32f4xx_rcc.h"
+#include "stm32f4xx_dma.h"
+#include "misc.h"
+>>>>>>> 8fbbdef076d6a19f8f8784e6f9dac24828e9f5b2
 void init_USART3(void);
 void init_LED(void);
 void init_SDcard(void);
@@ -89,7 +95,39 @@ void vApplicationStackOverflowHook(xTaskHandle pxTask, signed char *pcTaskName) 
 
 void init_SDcard(){
 	
+<<<<<<< HEAD
 	SD_Init();
+=======
+	SDIO_InitTypeDef SDIO_InitStruct;
+	GPIO_InitTypeDef GPIO_InitStruct;
+	
+	GPIO_PinAFConfig(GPIOC, GPIO_PinSource8, GPIO_AF_SDIO);
+	GPIO_PinAFConfig(GPIOC, GPIO_PinSource9, GPIO_AF_SDIO);
+	GPIO_PinAFConfig(GPIOC, GPIO_PinSource10, GPIO_AF_SDIO);
+	GPIO_PinAFConfig(GPIOC, GPIO_PinSource11, GPIO_AF_SDIO);
+	GPIO_PinAFConfig(GPIOD, GPIO_PinSource2, GPIO_AF_SDIO);
+	
+	// Setup Blue & Green LED on STM32-Discovery Board to use PWM.
+	GPIO_InitStruct.GPIO_Pin =  GPIO_Pin_8 | GPIO_Pin_9| GPIO_Pin_10| GPIO_Pin_11; //PD12->LED3 PD13->LED4 PD14->LED5 PDa5->LED6
+	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_AF;            // Alt Function - Push Pull
+	GPIO_InitStruct.GPIO_OType = GPIO_OType_PP;
+	GPIO_InitStruct.GPIO_Speed = GPIO_Speed_25MHz;
+	GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_NOPULL;
+	GPIO_Init( GPIOC, &GPIO_InitStruct ); 
+	GPIO_InitStruct.GPIO_Pin=GPIO_Pin_2;
+	GPIO_Init( GPIOD, &GPIO_InitStruct ); 
+	
+	SDIO_InitStruct.SDIO_BusWide=SDIO_BusWide_4b;
+	SDIO_InitStruct.SDIO_ClockBypass=SDIO_ClockBypass_Disable;
+	SDIO_InitStruct.SDIO_ClockDiv=0x00;
+	SDIO_InitStruct.SDIO_ClockEdge=SDIO_ClockEdge_Rising;
+	SDIO_InitStruct.SDIO_ClockPowerSave=SDIO_ClockPowerSave_Enable;
+	SDIO_InitStruct.SDIO_HardwareFlowControl=SDIO_HardwareFlowControl_Enable;
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_SDIO,ENABLE);
+	SDIO_ClockCmd(ENABLE);
+	SDIO_SetPowerState(SDIO_PowerState_ON);
+	SDIO_Init(&SDIO_InitStruct);
+>>>>>>> 8fbbdef076d6a19f8f8784e6f9dac24828e9f5b2
 }
 #if 0
 void test_SDcard(void* p){
@@ -103,6 +141,9 @@ void test_SDcard(void* p){
 		SDIO_SendCommand(&SDIO_CmdInitStruct);
 		while(SDIO_GetFlagStatus(SDIO_FLAG_CMDACT)==SET);
 		GPIO_ToggleBits( GPIOD,GPIO_Pin_12);
+
+		/*default printf is output to USART3 , PB10(Tx) and PB11(Rx) */
+		printf("the test command is OK\n"); 
 		vTaskDelay(1000);
 	}
 	vTaskDelete(NULL);
@@ -117,7 +158,7 @@ void test_FPU_test(void* p) {
     ff += s;
     // TODO some other test
 	GPIO_ToggleBits( GPIOD,GPIO_Pin_13);
-    vTaskDelay(1000);
+	vTaskDelay(1000);
   }
   vTaskDelete(NULL);
 }
