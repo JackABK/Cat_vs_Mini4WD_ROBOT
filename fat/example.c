@@ -83,9 +83,9 @@ void example_fat_fs()
     // Close file
     fl_fclose(file);
 
-    // Delete File
+   // Delete File
    // if (fl_remove("/file.bin") < 0)
-    //    printf("ERROR: Delete file failed\n");
+   // printf("ERROR: Delete file failed\n");
 
     // List root directory
     fl_listdirectory("/");

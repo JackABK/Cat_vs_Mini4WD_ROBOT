@@ -8,15 +8,12 @@ TOOLCHAIN_PREFIX:=arm-none-eabi
 OPTLVL:=0
 DBG:=-g
 
-<<<<<<< HEAD
 
 BIN_IMAGE = ./binary/FreeRTOS.bin
 
 
-=======
 BIN_IMAGE = ./binary/FreeRTOS.bin
 
->>>>>>> 8fbbdef076d6a19f8f8784e6f9dac24828e9f5b2
 FREERTOS:=$(CURDIR)/FreeRTOS
 STARTUP:=$(CURDIR)/hardware
 LINKER_SCRIPT:=$(CURDIR)/Utilities/stm32_flash.ld
@@ -131,11 +128,8 @@ all: $(OBJ)
 .PHONY: clean
 
 
-<<<<<<< HEAD
 flash:                                                                                                                                                          
-=======
 flash:                                                                                                                         
->>>>>>> 8fbbdef076d6a19f8f8784e6f9dac24828e9f5b2
 	st-flash write $(BIN_IMAGE) 0x8000000
 
 clean:

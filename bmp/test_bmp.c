@@ -53,6 +53,18 @@ void test_bmp()
 
 		//grab the imageData                                                                             
 		fl_fread(imageData_old , w*h , sizeof(unsigned char) , read);
+
+
+                for(i=0 ; i<w*h ; i++){
+                                 if(imageData_old[i] == 0xcc  )
+                                 {
+                                        /*index 204 is ORANGE ,  index (204+13) is RED */
+                                       imageData_old[i] = imageData_old[i]  - 100 ; 
+                                 }
+                }
+
+
+        
 		fl_fwrite(imageData_old , w*h , sizeof(unsigned char) , write);
 		printf("w is : %d\n" ,  w);
 		printf("h is : %d\n" ,  h);
