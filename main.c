@@ -6,7 +6,6 @@
 #include "stm32f4xx_usart.h"
 #include "stm32f4xx_gpio.h"
 #include "stm32f4xx_sdio.h"
-<<<<<<< HEAD
 #include "example.h"
 #include "reading_bmp.h"
 #include "test_bmp.h"
@@ -16,11 +15,10 @@
 #define USE_FILELIB_STDIO_COMPAT_NAMES
 
 
-=======
 #include "stm32f4xx_rcc.h"
 #include "stm32f4xx_dma.h"
 #include "misc.h"
->>>>>>> 8fbbdef076d6a19f8f8784e6f9dac24828e9f5b2
+
 void init_USART3(void);
 void init_LED(void);
 void init_SDcard(void);
@@ -31,13 +29,14 @@ int main(void) {
 
   NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
   init_USART3();
-  //init_LED();
-  //init_SDcard();
+
   example_fat_fs();
-  //example_bmp();
+ 
   test_bmp();
+  
   printf("Testing fatfs application is done.\n");
-//  ret = xTaskCreate(test_SDcard, "FPU", 512, NULL, 1, NULL);
+  
+
   ret = xTaskCreate(test_FPU_test, "FPU", configMINIMAL_STACK_SIZE, NULL, 1, NULL);
 
   if (ret == pdTRUE) {
@@ -91,13 +90,9 @@ void vApplicationStackOverflowHook(xTaskHandle pxTask, signed char *pcTaskName) 
   for(;;);
 }
 
-
-
 void init_SDcard(){
 	
-<<<<<<< HEAD
 	SD_Init();
-=======
 	SDIO_InitTypeDef SDIO_InitStruct;
 	GPIO_InitTypeDef GPIO_InitStruct;
 	
@@ -127,7 +122,6 @@ void init_SDcard(){
 	SDIO_ClockCmd(ENABLE);
 	SDIO_SetPowerState(SDIO_PowerState_ON);
 	SDIO_Init(&SDIO_InitStruct);
->>>>>>> 8fbbdef076d6a19f8f8784e6f9dac24828e9f5b2
 }
 #if 0
 void test_SDcard(void* p){
@@ -147,7 +141,7 @@ void test_SDcard(void* p){
 		vTaskDelay(1000);
 	}
 	vTaskDelete(NULL);
-	SD_CMD
+	
 }
 #endif
 void test_FPU_test(void* p) {
