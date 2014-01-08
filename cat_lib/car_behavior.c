@@ -56,6 +56,50 @@ void backward_motor(void){
 	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN2,Bit_SET);
 	
 }
+void left_motor(void){
+        /*forward and turn left big angle*/
+        servo_operate(3,15);
+	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN1,Bit_SET);
+	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN2,Bit_RESET);
+}
+void right_motor(void){
+        /*forward and turn right big angle*/
+        servo_operate(3,-15);
+	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN1,Bit_SET);
+	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN2,Bit_RESET);
+}
+void right_forward_motor(void){
+        /*forward and turn right small angle*/
+        servo_operate(3,7);
+	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN1,Bit_SET);
+	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN2,Bit_RESET);
+}
+void left_forward_motor(void){
+        /*forward and turn right small angle*/
+        servo_operate(3,-7);
+	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN1,Bit_SET);
+	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN2,Bit_RESET);
+}
+
+void right_backward_motor(void){
+        /*forward and turn right small angle*/
+        servo_operate(3,7);
+	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN1,Bit_RESET);
+	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN2,Bit_SET);
+}
+
+void left_backward_motor(void){
+        /*forward and turn right small angle*/
+        servo_operate(3,-7);
+	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN1,Bit_RESET);
+	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN2,Bit_SET);
+}
+
+
+
+
+
+
 #define THRESHOLD_DISTANCE 100
 
 static unsigned char count4car=0;
@@ -165,7 +209,6 @@ void init_car(){
 	init_motor();
 	servo_init();
 	ultra_sound_init();
-	
 	init_button();
 	carTimers=xTimerCreate("Car",	 ( CAR_POLLING_PERIOD), pdTRUE, ( void * ) 1,  CarPolling	 );
 	xTimerStart( carTimers, 0 );
@@ -202,7 +245,6 @@ void init_button(void){
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
-	
 	EXTI_InitStruct.EXTI_Line = EXTI_Line1;
 	EXTI_InitStruct.EXTI_Mode = EXTI_Mode_Interrupt;
 	EXTI_InitStruct.EXTI_Trigger = EXTI_Trigger_Rising;
