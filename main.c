@@ -47,7 +47,7 @@ int main(void) {
 	init_USART3();
 	init_USART1(9600);
 	init_LED();
-         //init_car();
+         init_car();
 
 	ret = xTaskCreate(test_FPU_test, "FPU", configMINIMAL_STACK_SIZE, NULL, 1, NULL);
 
@@ -209,13 +209,16 @@ void remote_task(void *p)
 						        switch(Receive_Command){
                                                                       case 'A':
 										//Mode A   -->  remote control mode
-										/*reset the system*/
-										NVIC_SystemReset();              
+										
+                                                                                       close_CarPolloing();
+                                                                                       close_UltrasoundPolling();
 										break;
                                                                        case 'B':
 										//Mode B   --> auto-avoidance mode
 										/*enable the auto-avoidance*/
-										 init_car();             
+
+                                                                                      /*reset the system*/
+										NVIC_SystemReset();    
 										break;
 								case 'f':
 										//forward

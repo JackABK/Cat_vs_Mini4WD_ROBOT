@@ -58,13 +58,13 @@ void backward_motor(void){
 }
 void left_motor(void){
         /*forward and turn left big angle*/
-        servo_operate(3,15);
+        servo_operate(3,-12);
 	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN1,Bit_SET);
 	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN2,Bit_RESET);
 }
 void right_motor(void){
         /*forward and turn right big angle*/
-        servo_operate(3,-15);
+        servo_operate(3,12);
 	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN1,Bit_SET);
 	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN2,Bit_RESET);
 }
@@ -120,8 +120,11 @@ void CarPolling(){
 		switch(state){
 			case 0x00:
 				//deadend
-				servo_operate(10,0);
 				backward_motor();
+                                  if(temp3>temp4)
+                                    servo_operate(3,-7);
+                                  else
+                                    servo_operate(3,7);
 				break;
 			case 0x01:
 				//need to turn left
@@ -167,8 +170,12 @@ STOP_CAR: count4car++;
 		switch(state){
 			case 0x00:
 				//deadend
-				servo_operate(10,0);
+				
 				forward_motor();
+                                    if(temp1>temp2)
+                                         servo_operate(3,-7);
+                                      else
+                                          servo_operate(3,7);
 				break;
 			case 0x01:
 				//turn left
@@ -192,11 +199,10 @@ STOP_CAR: count4car++;
 		}
 STOP_CAR1: count4car++;
 		if(count4car>4){
-			GPIO_ResetBits( GPIOD,GPIO_Pin_12);
+	        		GPIO_ResetBits( GPIOD,GPIO_Pin_12);
 			GPIO_ResetBits( GPIOD,GPIO_Pin_13);
 			GPIO_ResetBits( GPIOD,GPIO_Pin_14);
 			GPIO_ResetBits( GPIOD,GPIO_Pin_15);
-			
 			stop_motor();
 			fButtonFront=0;
 		}
@@ -217,13 +223,13 @@ void init_button(void){
 	GPIO_InitTypeDef GPIO_InitStruct;
 	EXTI_InitTypeDef EXTI_InitStruct;
 	NVIC_InitTypeDef NVIC_InitStructure;
-	/* Enable GPIO C clock. */
+	/* Enable GPIO A clock. */
         RCC_APB2PeriphClockCmd(RCC_APB2Periph_SYSCFG, ENABLE);
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
 	// Setup Blue & Green LED on STM32-Discovery Board to use PWM.
 	GPIO_InitStruct.GPIO_Pin =  GPIO_Pin_0 ;
 	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_IN;
-	GPIO_InitStruct.GPIO_Speed = GPIO_Speed_2MHz;
+	GPIO_InitStruct.GPIO_Speed = GPIO_Speed_100MHz;
 	GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_DOWN;
 	GPIO_Init( GPIOA, &GPIO_InitStruct ); 
     
@@ -231,9 +237,11 @@ void init_button(void){
 	GPIO_InitStruct.GPIO_Mode = GPIO_Mode_IN;
 	GPIO_InitStruct.GPIO_Speed = GPIO_Speed_100MHz;
 	GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_DOWN;
-	GPIO_Init( GPIOA, &GPIO_InitStruct ); 
-	//SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOA,EXTI_PinSource1);
-        
+	GPIO_Init( GPIOA, &GPIO_InitStruct );
+
+    
+    /* Connect EXTI Line0 to PA0 pin */
+	SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOA,EXTI_PinSource0);
 	EXTI_InitStruct.EXTI_Line = EXTI_Line0;
 	EXTI_InitStruct.EXTI_Mode = EXTI_Mode_Interrupt;
 	EXTI_InitStruct.EXTI_Trigger = EXTI_Trigger_Rising;
@@ -245,6 +253,11 @@ void init_button(void){
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
+
+
+    
+    /* Connect EXTI Line1 to PA1 pin */
+	SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOA,EXTI_PinSource1);
 	EXTI_InitStruct.EXTI_Line = EXTI_Line1;
 	EXTI_InitStruct.EXTI_Mode = EXTI_Mode_Interrupt;
 	EXTI_InitStruct.EXTI_Trigger = EXTI_Trigger_Rising;
@@ -253,32 +266,57 @@ void init_button(void){
 	EXTI_ClearITPendingBit(EXTI_Line1);
 	NVIC_InitStructure.NVIC_IRQChannel = EXTI1_IRQn;
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 4;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_Init(&NVIC_InitStructure);
 }
 
 
+    
 
 void EXTI0_IRQHandler(){
-	EXTI_ClearITPendingBit(EXTI_Line0);
-	
+
+    if(EXTI_GetITStatus(EXTI_Line0) != RESET)
+    {
+            GPIO_SetBits( GPIOD,GPIO_Pin_12);
+           GPIO_SetBits( GPIOD,GPIO_Pin_13);
+           GPIO_SetBits( GPIOD,GPIO_Pin_14);
+           GPIO_SetBits( GPIOD,GPIO_Pin_15);
+
 	if(fButtonBack==0){
 		fButtonBack=1;
 		count4car=0;
 	}
+	EXTI_ClearITPendingBit(EXTI_Line0);
+
+    }
 }
 
 void EXTI1_IRQHandler(){
-	EXTI_ClearITPendingBit(EXTI_Line1);
-    GPIO_ToggleBits( GPIOD,GPIO_Pin_12);
-                GPIO_ToggleBits( GPIOD,GPIO_Pin_13);
-                GPIO_ToggleBits( GPIOD,GPIO_Pin_14);
-                GPIO_ToggleBits( GPIOD,GPIO_Pin_15);
+
+
+      if(EXTI_GetITStatus(EXTI_Line1) != RESET)
+  {
+	
+            GPIO_ResetBits( GPIOD,GPIO_Pin_12);
+           GPIO_ResetBits( GPIOD,GPIO_Pin_13);
+           GPIO_ResetBits( GPIOD,GPIO_Pin_14);
+           GPIO_ResetBits( GPIOD,GPIO_Pin_15);
+
         if(fButtonFront==0){
 		fButtonFront=1;
 		count4car=0;
 	}
+
+        EXTI_ClearITPendingBit(EXTI_Line1);
+
+      }
+}
+
+
+void close_CarPolloing(void)
+{
+    xTimerDelete(carTimers,0);
 }
 
 
