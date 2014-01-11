@@ -17,22 +17,17 @@
 #define MOTOR_INPUT_PIN1 GPIO_Pin_2
 #define MOTOR_INPUT_PIN2 GPIO_Pin_3
 
-#define CAR_POLLING_PERIOD 50 //unit:ms
+#define CAR_POLLING_PERIOD 20 //unit:ms
 
-#define LEFT_DEGREE  -4
-#define CENTRAL_DEGREE 6
-#define RIGHT_DEGREE    16
+//for calibration
+#define SERVO_LEFT_DEGREE  -4
+#define SERVO_CENTRAL_DEGREE 6
+#define SERVO_RIGHT_DEGREE    16
 
 
-unsigned char fButtonFront=0,fButtonBack=0;
+
 xTimerHandle carTimers;
-xTimerHandle PIRTimers_Front;
-xTimerHandle PIRTimers_Back;
-xTimerHandle PIR_Timers;
 
-
-static unsigned char state_motor_test=0;
-static unsigned char Ultrasonic_Detected_Finished=1;
 
 
 void init_button(void);
@@ -53,58 +48,53 @@ void init_motor(void){
 	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN2,Bit_RESET);
 	
 }
-void forward_motor(void){
+inline void forward_motor(void){
 	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN1,Bit_SET);
 	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN2,Bit_RESET);
 	
 }
-void stop_motor(void){
-	servo_operate(3,CENTRAL_DEGREE);
+void stop_motor(){
+	servo_operate(3,SERVO_CENTRAL_DEGREE);
 	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN1,Bit_RESET);
 	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN2,Bit_RESET);
 }
-void backward_motor(void){
+inline void backward_motor(){
 	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN1,Bit_RESET);
 	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN2,Bit_SET);
 	
 }
-void left_motor(void){
-        /*forward and turn left big angle*/
-        servo_operate(3,-12);
-	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN1,Bit_SET);
-	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN2,Bit_RESET);
+void straight_forward_motor(){
+	servo_operate(3,SERVO_CENTRAL_DEGREE);
+	forward_motor();
 }
-void right_motor(void){
-        /*forward and turn right big angle*/
-        servo_operate(3,12);
-	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN1,Bit_SET);
-	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN2,Bit_RESET);
+void straight_backward_motor(){
+	servo_operate(3,SERVO_CENTRAL_DEGREE);
+	backward_motor();
 }
-void right_forward_motor(void){
+
+void left_forward_motor(){
         /*forward and turn right small angle*/
-        servo_operate(3,7);
-	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN1,Bit_SET);
-	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN2,Bit_RESET);
+        servo_operate(3,SERVO_LEFT_DEGREE);
+	forward_motor();
 }
-void left_forward_motor(void){
+
+void right_forward_motor(){
         /*forward and turn right small angle*/
-        servo_operate(3,-7);
-	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN1,Bit_SET);
-	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN2,Bit_RESET);
+	servo_operate(3,SERVO_RIGHT_DEGREE);
+	forward_motor();
 }
 
-void right_backward_motor(void){
+
+void right_backward_motor(){
         /*forward and turn right small angle*/
-        servo_operate(3,7);
-	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN1,Bit_RESET);
-	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN2,Bit_SET);
+	servo_operate(3,SERVO_RIGHT_DEGREE);
+	forward_motor();
 }
 
-void left_backward_motor(void){
+void left_backward_motor(){
         /*forward and turn right small angle*/
-        servo_operate(3,-7);
-	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN1,Bit_RESET);
-	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN2,Bit_SET);
+        servo_operate(3,SERVO_LEFT_DEGREE);
+	backward_motor();
 }
 
 
@@ -112,9 +102,6 @@ void left_backward_motor(void){
 
 
 
-#define THRESHOLD_DISTANCE 50
-
-static unsigned char count4car=0;
 
 int search_maximum_index(unsigned long* arr,int length){
     unsigned long maxi=0;
@@ -127,152 +114,156 @@ int search_maximum_index(unsigned long* arr,int length){
     }
     return idx;
 }
+car_state_t car_state=CAR_STATE_IDLE;
+
+inline unsigned char ReadPIRButton(){
+	unsigned char temp;
+	temp=(GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_0)<<1  )
+		|GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_1);
+	return temp;
+}
+inline unsigned char IsFrontButtonAct(unsigned char button){
+	return button&0x01;
+}
+inline unsigned char IsBackButtonAct(unsigned char button){
+	return button&0x02;
+}
+
+#define PIR_DEBOUNCE_NUM 25
+#define CAR_MOVING_PERIOD 30
+#define CAR_REST_PERIOD 100
+
+#define THRESHOLD_DISTANCE 100
+
 void CarPolling(){
-	unsigned char state=0x00;
-	unsigned long temp[4];
+	unsigned char fButton,state=0;
+	unsigned long distance[4];
+	static int count4front,count4back,count;
+	if(car_state==CAR_STATE_IDLE){
+		fButton=ReadPIRButton();
+		if(IsFrontButtonAct(fButton))
+			count4front++;
+		else
+			count4front=0;
+		if(IsBackButtonAct(fButton))
+			count4back++;
+		else
+			count4back=0;
 
-        fButtonBack = GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_0)  ;
-        fButtonFront= GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_1)  ;
-          
-
-    
-	if(fButtonBack==1 && fButtonFront==0){
-                Ultrasonic_Detected_Finished = 0;
-		temp[0]=Get_CH1Distance();
-		temp[1]=Get_CH2Distance();
-		temp[2]=Get_CH3Distance();
-		temp[3]=Get_CH4Distance();
-		if(temp[0]==0 || temp[1]==0)
-			goto STOP_CAR;
-		state|=((temp[0]>THRESHOLD_DISTANCE)?0x01:0x00);
-		state|=((temp[1]>THRESHOLD_DISTANCE)?0x02:0x00);
-		switch(state){
-			case 0x00:
-				//deadend
-                                  if(temp[2]>temp[3])
-                                    servo_operate(3,LEFT_DEGREE);
-                                  else
-                                    servo_operate(3,RIGHT_DEGREE);
-
-                                  backward_motor();
-				break;
-			case 0x01:
-				//need to turn left
-				servo_operate(3,LEFT_DEGREE);
-				forward_motor();
-				break;
-
-			case 0x02:
-				//need to turn right
-				servo_operate(3,RIGHT_DEGREE);
-				forward_motor();
-				break;
-
-			case 0x03:
-				//nothing ahead
-				servo_operate(3,CENTRAL_DEGREE);
-				forward_motor();
-				break;
-
-			
+		if(count4front>=PIR_DEBOUNCE_NUM)
+			car_state|=CAR_STATE_MOVE_BACK;
+		if(count4back>=PIR_DEBOUNCE_NUM)
+			car_state|=CAR_STATE_MOVE_FORWARD;
+		if(count4front+count4back>=40)
+			car_state=CAR_STATE_MOVE_BOTH;
+	}
+	else if(car_state==CAR_STATE_REST){
+		stop_motor();
+		count++;
+		if(count>=CAR_REST_PERIOD){
+			count=0;
+			car_state=CAR_STATE_IDLE;
 		}
-STOP_CAR: count4car++;
-		if(count4car==19){
-			GPIO_ResetBits( GPIOD,GPIO_Pin_12);
-			GPIO_ResetBits( GPIOD,GPIO_Pin_13);
-			GPIO_ResetBits( GPIOD,GPIO_Pin_14);
-			GPIO_ResetBits( GPIOD,GPIO_Pin_15);
-			
-			stop_motor();
-			fButtonBack=0;
-                          Ultrasonic_Detected_Finished = 1;
+	}
+	else if(car_state==CAR_STATE_MOVING){
+		count++;
+		if(count>=CAR_MOVING_PERIOD){
+			count=0;
+			car_state=CAR_STATE_REST;
 		}
 			
 	}
-        else if(fButtonFront==1 && fButtonBack==0){
-                   Ultrasonic_Detected_Finished= 0;
-		temp[0]=Get_CH1Distance();
-		temp[1]=Get_CH2Distance();
-		temp[2]=Get_CH3Distance();
-		temp[3]=Get_CH4Distance();
-		if(temp[2]==0 || temp[3]==0)
-			goto STOP_CAR1;
-		state|=((temp[2]>THRESHOLD_DISTANCE)?0x01:0x00);
-		state|=((temp[3]>THRESHOLD_DISTANCE)?0x02:0x00);
-		switch(state){
-			case 0x00:
-				//deadend
+	else{
+		distance[0]=Get_CH1Distance();
+		distance[1]=Get_CH2Distance();
+		distance[2]=Get_CH3Distance();
+		distance[3]=Get_CH4Distance();
+		
+		if(car_state==CAR_STATE_MOVE_FORWARD){
+			if(distance[0]==0 || distance[1]==0){
+				car_state=CAR_STATE_IDLE;
+				return;
+			}
+			state|=((distance[0]>THRESHOLD_DISTANCE)?0x01:0x00);
+			state|=((distance[1]>THRESHOLD_DISTANCE)?0x02:0x00);
+			switch(state){
+				case 0x00:
+					//deadend
+                          	        if(distance[2]>distance[3])
+						left_backward_motor();
+					else
+						right_backward_motor();
+					break;
+				case 0x01:
+					//need to turn left
+					left_forward_motor();
+					break;
+				case 0x02:
+					//need to turn right
+					right_forward_motor();
+					break;
+				case 0x03:
+					//nothing ahead
+					straight_forward_motor();
+					break;
+
+			
+			}
+		}
+		else if(car_state==CAR_STATE_MOVE_BACK){
+			if(distance[2]==0 || distance[3]==0){
+				car_state=CAR_STATE_IDLE;
+				return;
+			}
+			state|=((distance[2]>THRESHOLD_DISTANCE)?0x01:0x00);
+			state|=((distance[3]>THRESHOLD_DISTANCE)?0x02:0x00);
+			switch(state){
+				case 0x00:
+					//deadend
 				
-                                    if(temp[0]>temp[1])
-                                         servo_operate(3,LEFT_DEGREE);
-                                      else
-                                          servo_operate(3,RIGHT_DEGREE);
+					if(distance[0]>distance[1])
+						left_forward_motor();
+					else
+						right_forward_motor();
+					break;
+				case 0x01:
+					
+					left_backward_motor();
+					break;
 
-                                      forward_motor();
-				break;
-			case 0x01:
-				//turn left
-				servo_operate(3,LEFT_DEGREE);
-				backward_motor();
-				break;
+				case 0x02:
+					right_backward_motor();
+					break;
 
-			case 0x02:
-				//turn right
-				servo_operate(3,RIGHT_DEGREE);
-				backward_motor();
-				break;
-
-			case 0x03:
-				//nothing ahead
-				servo_operate(3,CENTRAL_DEGREE);
-				backward_motor();
-				break;
+				case 0x03:
+					//nothing ahead
+					straight_backward_motor();
+					break;
 
 			
+			}
 		}
-STOP_CAR1: count4car++;
-		if(count4car==19){
-	        		GPIO_ResetBits( GPIOD,GPIO_Pin_12);
-			GPIO_ResetBits( GPIOD,GPIO_Pin_13);
-			GPIO_ResetBits( GPIOD,GPIO_Pin_14);
-			GPIO_ResetBits( GPIOD,GPIO_Pin_15);
-			stop_motor();
-			fButtonFront=0;
-                          Ultrasonic_Detected_Finished = 1;
+		else if(car_state==CAR_STATE_MOVE_BOTH){
+			switch( search_maximum_index(distance,4)){
+				case 0://left forward
+					left_forward_motor();
+					break;
+				case 1://right forward
+					right_forward_motor();
+					break;
+				case 2://left backward
+					left_backward_motor();
+					break;
+				case 3://right backward
+					right_backward_motor();
+					break;
+			}
+
 		}
-			
+		car_state=CAR_STATE_MOVING;
 	}
-        else if(fButtonFront==1&&fButtonBack==1){
-                    temp[0]=Get_CH1Distance();
-		temp[1]=Get_CH2Distance();
-		temp[2]=Get_CH3Distance();
-		temp[3]=Get_CH4Distance();
-                switch( search_maximum_index(temp,4)){
-                    case 0://left forward
-                                servo_operate(3,LEFT_DEGREE);
-		            	forward_motor();
-                              break;
-                      case 1://right forward
-                                servo_operate(3,RIGHT_DEGREE);
-		            	forward_motor();
-                              break;
-                      case 2://left backward
-                                servo_operate(3,LEFT_DEGREE);
-		            	backward_motor();
-                              break;
-                      case 3://right backward
-                                servo_operate(3,RIGHT_DEGREE);
-		            	backward_motor();
-                              break;
-                     
-
-                }
-                count4car++;
-		if(count4car==19){
-			
-			stop_motor();
-		}
-        }
+       
+        
 	
 }
 
@@ -280,66 +271,7 @@ STOP_CAR1: count4car++;
 
 
 
-void PIR_Polling()
-{
-        unsigned char Direction_state=0x00;
-        uint8_t PIR_Back_Bit; 
-        uint8_t PIR_Front_Bit;
-        
-    if(Ultrasonic_Detected_Finished){
 
-         PIR_Back_Bit = GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_0)  ;
-         PIR_Front_Bit = GPIO_ReadInputDataBit(GPIOA,GPIO_Pin_1)  ;
-        
-        Direction_state|=((PIR_Back_Bit)?0x01:0x00);
-        Direction_state|=((PIR_Front_Bit)?0x02:0x00);
-
-        switch(Direction_state){
-                case 0x00:
-                    //Nothing detected
-
-       
-                                    break;
-                    case 0x01:
-                        //PIR back detected
-                GPIO_SetBits( GPIOD,GPIO_Pin_12);
-                GPIO_SetBits( GPIOD,GPIO_Pin_13);
-                GPIO_SetBits( GPIOD,GPIO_Pin_14);
-                GPIO_SetBits( GPIOD,GPIO_Pin_15);
-                     if(fButtonBack==0){
-                         fButtonBack=1;
-                         count4car=0;
-                     }
-                                    break;
-
-                        case 0x02:
-
-                            //PIR front detected
-                                                  GPIO_ResetBits( GPIOD,GPIO_Pin_12);
-                                                    GPIO_ResetBits( GPIOD,GPIO_Pin_13);
-                                                  GPIO_ResetBits( GPIOD,GPIO_Pin_14);
-                                                  GPIO_ResetBits( GPIOD,GPIO_Pin_15);
-
-                   if(fButtonFront==0){
-                   fButtonFront=1;
-                   count4car=0;
-                    }
-                                                        break;
-
-        case 0x03:
-            //PIR front  and back detected
-            GPIO_SetBits( GPIOD,GPIO_Pin_12);
-                GPIO_SetBits( GPIOD,GPIO_Pin_13);
-                GPIO_SetBits( GPIOD,GPIO_Pin_14);
-                GPIO_SetBits( GPIOD,GPIO_Pin_15);
-                      if(fButtonFront==0){
-                   fButtonFront=1;
-                   count4car=0;
-                    }
-        }
-
-    }
-}
 
 void init_car(){
 	init_motor();
@@ -370,88 +302,12 @@ void init_button(void){
 	GPIO_InitStruct.GPIO_PuPd = GPIO_PuPd_DOWN;
 	GPIO_Init( GPIOA, &GPIO_InitStruct );
 
-    #if 0
-    /* Connect EXTI Line0 to PA0 pin */
-	SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOA,EXTI_PinSource0);
-	EXTI_InitStruct.EXTI_Line = EXTI_Line0;
-	EXTI_InitStruct.EXTI_Mode = EXTI_Mode_Interrupt;
-	EXTI_InitStruct.EXTI_Trigger = EXTI_Trigger_Rising;
-	EXTI_InitStruct.EXTI_LineCmd = ENABLE;
-	EXTI_Init(&EXTI_InitStruct);
-	EXTI_ClearITPendingBit(EXTI_Line0);
-	NVIC_InitStructure.NVIC_IRQChannel = EXTI0_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;
-	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-	NVIC_Init(&NVIC_InitStructure);
-
-    /* Connect EXTI Line1 to PA1 pin */
-	SYSCFG_EXTILineConfig(EXTI_PortSourceGPIOA,EXTI_PinSource1);
-	EXTI_InitStruct.EXTI_Line = EXTI_Line1;
-	EXTI_InitStruct.EXTI_Mode = EXTI_Mode_Interrupt;
-	EXTI_InitStruct.EXTI_Trigger = EXTI_Trigger_Rising;
-	EXTI_InitStruct.EXTI_LineCmd = ENABLE;
-	EXTI_Init(&EXTI_InitStruct);
-	EXTI_ClearITPendingBit(EXTI_Line1);
-	NVIC_InitStructure.NVIC_IRQChannel = EXTI1_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 4;
-	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-	NVIC_Init(&NVIC_InitStructure);
-    #endif
     
-
-    /*using the polling method to trigger the PIR sensors*/
-
-  //  PIR_Timers=xTimerCreate("PIRTimers", ( 100), pdTRUE, ( void * ) 1,  PIR_Polling);
-   //  xTimerStart( PIR_Timers, 0 );
         
 }
 
-void EXTI0_IRQHandler(){
-
-    if(EXTI_GetITStatus(EXTI_Line0) != RESET)
-    {
-            GPIO_SetBits( GPIOD,GPIO_Pin_12);
-           GPIO_SetBits( GPIOD,GPIO_Pin_13);
-           GPIO_SetBits( GPIOD,GPIO_Pin_14);
-           GPIO_SetBits( GPIOD,GPIO_Pin_15);
-
-	if(fButtonBack==0){
-		fButtonBack=1;
-		count4car=0;
-	}
-	EXTI_ClearITPendingBit(EXTI_Line0);
-
-    }
-}
-
-void EXTI1_IRQHandler(){
 
 
-      if(EXTI_GetITStatus(EXTI_Line1) != RESET)
-  {
-	
-            GPIO_ResetBits( GPIOD,GPIO_Pin_12);
-           GPIO_ResetBits( GPIOD,GPIO_Pin_13);
-           GPIO_ResetBits( GPIOD,GPIO_Pin_14);
-           GPIO_ResetBits( GPIOD,GPIO_Pin_15);
-
-        if(fButtonFront==0){
-		fButtonFront=1;
-		count4car=0;
-	}
-
-        EXTI_ClearITPendingBit(EXTI_Line1);
-
-      }
-}
-
-
-void close_CarPolloing(void)
-{
-    xTimerDelete(carTimers,0);
-}
 
 
 

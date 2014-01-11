@@ -222,8 +222,8 @@ void remote_task(void *p)
                                                                       case 'A':
 										//Mode A   -->  remote control mode
 										
-                                                                                       close_CarPolloing();
-                                                                                       close_UltrasoundPolling();
+                                                                                      // close_CarPolloing();
+                                                                                      // close_UltrasoundPolling();
 										break;
                                                                        case 'B':
 										//Mode B   --> auto-avoidance mode
@@ -242,11 +242,11 @@ void remote_task(void *p)
 										break;
                                                                      case 'l':
 										//left 
-										left_motor();              
+										//left_motor();              
 										break;
                                                                      case 'r':
 										//right
-										right_motor();              
+										//right_motor();              
 										break;
                                                                      case 'N':
                                                                                     //left _forward
