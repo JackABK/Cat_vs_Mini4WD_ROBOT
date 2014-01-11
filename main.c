@@ -114,7 +114,19 @@ void test_FPU_test(void* p) {
   
 	printf("%ld %ld %ld %ld\n\r",Get_CH1Distance(),Get_CH2Distance() ,Get_CH3Distance(),Get_CH4Distance() );
 
-    vTaskDelay(1000);
+
+#if 0
+     forward_motor();
+     vTaskDelay(1000);
+     stop_motor();
+     vTaskDelay(1000);
+     backward_motor();
+      vTaskDelay(1000);
+      left_backward_motor();
+      vTaskDelay(1000);
+      right_backward_motor();
+ #endif
+      
   }
   vTaskDelete(NULL);
 }
