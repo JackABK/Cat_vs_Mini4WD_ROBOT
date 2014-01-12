@@ -242,11 +242,11 @@ void remote_task(void *p)
 										break;
                                                                      case 'l':
 										//left 
-										//left_motor();              
+										left_motor();              
 										break;
                                                                      case 'r':
 										//right
-										//right_motor();              
+										right_motor();              
 										break;
                                                                      case 'N':
                                                                                     //left _forward

@@ -20,9 +20,9 @@
 #define CAR_POLLING_PERIOD 20 //unit:ms
 
 //for calibration
-#define SERVO_LEFT_DEGREE  -4
+#define SERVO_LEFT_DEGREE  -14
 #define SERVO_CENTRAL_DEGREE 6
-#define SERVO_RIGHT_DEGREE    16
+#define SERVO_RIGHT_DEGREE    26
 
 
 
@@ -63,6 +63,20 @@ inline void backward_motor(){
 	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN2,Bit_SET);
 	
 }
+
+void left_motor(void){
+        /*forward and turn left big angle*/
+        servo_operate(3,-12);
+	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN1,Bit_SET);
+	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN2,Bit_RESET);
+}
+void right_motor(void){
+        /*forward and turn right big angle*/
+        servo_operate(3,12);
+	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN1,Bit_SET);
+	GPIO_WriteBit(MOTOR_INPUT_PORT,MOTOR_INPUT_PIN2,Bit_RESET);
+}
+
 void straight_forward_motor(){
 	servo_operate(3,SERVO_CENTRAL_DEGREE);
 	forward_motor();
@@ -129,9 +143,11 @@ inline unsigned char IsBackButtonAct(unsigned char button){
 	return button&0x02;
 }
 
-#define PIR_DEBOUNCE_NUM 25
-#define CAR_MOVING_PERIOD 30
-#define CAR_REST_PERIOD 100
+
+
+#define PIR_DEBOUNCE_NUM 10
+#define CAR_MOVING_PERIOD 40
+#define CAR_REST_PERIOD 50
 
 #define THRESHOLD_DISTANCE 100
 
@@ -266,11 +282,6 @@ void CarPolling(){
         
 	
 }
-
-
-
-
-
 
 
 void init_car(){
