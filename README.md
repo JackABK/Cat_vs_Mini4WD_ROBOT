@@ -1,53 +1,39 @@
-# STM32F4-FreeRTOS
+# Cat vs Mini 4WD ROBOT
 
-A demo project of FreeRTOS running on a STM32F4 Discovery board.
+This project can be reach to auto-avoidance the cat based on Mini 4WD.
 
-## Steps to run this example
+## Our thoughts
+On general, the cat usually always lazy at home,
+it's life is full of boring and sleeping,
+so that we expected design a small robot capable of attracting the cat, 
+this little robot can do his best to play with the cat.
 
-### Prerequisite
 
-1. A PC running Linux or Windows with Cygwin(not tested). A Mac is also fine with this example.
-2. A STM32F4Discovery board.
-3. A FT232RL USB to serial board which is recommended if there's no serial port on your computer.
-4. USB Cable, Dupont Line and other tools.
+## Robot of functions
+Whether using a variety of interesting ways,to be able to attract the cat's attention, and let the cat moved,
+a very important one is the robot can not be tracked by the cat, therefore the robot movement speed must be fast enough to do run action avoid the cat, and has a basic obstacle avoidance capability.
 
-### Install the toolchain
 
-The pre-built version of GNU Tools for ARM can be downloaded from its [website](https://launchpad.net/gcc-arm-embedded). It's available for most systems. Follow the instructions in the readme file and installed the toolchain to your system. To verify your installation, simply type `arm-none-eabi-gcc --version` in your terminal, if everything goes right, you'll get output like this:
 
-```
-arm-none-eabi-gcc (GNU Tools for ARM Embedded Processors) 4.7.3 20130312 (release) [ARM/embedded-4_7-branch revision 196615]
-Copyright (C) 2012 Free Software Foundation, Inc.
-This is free software; see the source for copying conditions.  There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-```
+##Cats features
+1. Excellent hearing
+2. Great jumping ability
+3. High agility
+4. Full of Curiosity
 
-### Install ST-Link utility
 
-#### Windows
-Grab the official utility from [ST website](http://www.st.com/web/catalog/tools/FM146/CL1984/SC724/SS1677/PF251168). Note that you should install the USB driver before install the st-util.
 
-#### Linux and OS X
-Clone this [git](https://github.com/texane/stlink), follow the instructions on that page and install st-util to your system.
+## Used of stuff
+1. Mini 4WD (High speed of the motor improved)
+2. PIR Motion Sensor 
+3. Ultrasonic Sensor (HC-SR04.)
+4. Servo motor (The Mini 4WD must be able to turn)
 
-### Compile this example
-The only thing you need to do is to edit the makefile and let it know your toolchain installation path. Change the `TOOLCHARN_ROOT` variable at the third line of makefile and point it to where you installed the toolchain. The you can simply type `make` and compile the example.
 
-### Debug
-Connect your STM32F4Discovery with a USB cable. You can flash the binary into the board with this:
 
-`$ st-flash write binary/FreeRTOS.bin 0x8000000`
+## Final project demo
+[The Cat vs Mini 4WD ROBOT - Auto-avoidance the funny cat](http://www.youtube.com/watch?v=jW4jw-KjOlk)
 
-The code is wrote directly into internal flash of STM32 processor and it starts to run after reset. To debug it, first start the GDB server:
 
-`$ st-util &`
-
-And then GDB:
-
-```
-$ arm-none-eabi-gdb binary/FreeRTOS.elf
-(gdb) tar ext :4242
-(gdb) b main
-(gdb) c
-```
-
-You'll get breakpoint triggered at `main` function, and enjoy!
+## Information
+To more info, please see [NCKU Wikipad](http://wiki.csie.ncku.edu.tw/embedded/team2013-10)
