@@ -17,7 +17,7 @@
 #define MOTOR_INPUT_PIN1 GPIO_Pin_2
 #define MOTOR_INPUT_PIN2 GPIO_Pin_3
 
-#define CAR_POLLING_PERIOD 20 //unit:ms
+#define CAR_POLLING_PERIOD  30//unit:ms
 
 //for calibration
 #define SERVO_LEFT_DEGREE  -14
@@ -102,7 +102,7 @@ void right_forward_motor(){
 void right_backward_motor(){
         /*forward and turn right small angle*/
 	servo_operate(3,SERVO_RIGHT_DEGREE);
-	backward_motor();
+    backward_motor();
 }
 
 void left_backward_motor(){
@@ -145,17 +145,27 @@ inline unsigned char IsBackButtonAct(unsigned char button){
 
 
 
-#define PIR_DEBOUNCE_NUM 10
-#define CAR_MOVING_PERIOD 40
-#define CAR_REST_PERIOD 50
+//#define PIR_DEBOUNCE_NUM 10
+//#define CAR_MOVING_PERIOD 40
+//#define CAR_REST_PERIOD 50
 
-#define THRESHOLD_DISTANCE 100
+#define PIR_DEBOUNCE_NUM 3
+#define CAR_MOVING_PERIOD 2
+#define CAR_REST_PERIOD 2
+
+#define THRESHOLD_DISTANCE 30
 
 void CarPolling(){
 	unsigned char fButton,state=0;
 	unsigned long distance[4];
 	static int count4front,count4back,count;
+    distance[0]=Get_CH1Distance();
+	distance[1]=Get_CH2Distance();
+	distance[2]=Get_CH3Distance();
+	distance[3]=Get_CH4Distance();
+    
 	if(car_state==CAR_STATE_IDLE){
+        #if 0
 		fButton=ReadPIRButton();
 		if(IsFrontButtonAct(fButton))
 			count4front++;
@@ -172,6 +182,121 @@ void CarPolling(){
 			car_state|=CAR_STATE_MOVE_FORWARD;
 		if(count4front+count4back>=40)
 			car_state=CAR_STATE_MOVE_BOTH;
+        #endif 
+        
+
+
+        
+        /*jackabk added, dont using the PIR sensor, only used the ultrasonic to determine.*/
+        
+		if(distance[0]==0 || distance[1]==0 || distance[2]==0 || distance[3]==0){
+				car_state=CAR_STATE_IDLE;
+				return;
+		}
+		state|=((distance[0]<THRESHOLD_DISTANCE)?0x01:0x00);
+		state|=((distance[1]<THRESHOLD_DISTANCE)?0x02:0x00);
+		state|=((distance[2]<THRESHOLD_DISTANCE)?0x04:0x00);
+		state|=((distance[3]<THRESHOLD_DISTANCE)?0x08:0x00);
+		switch(state){
+				case 0x00:
+						stop_motor();
+						break;
+				case 0x01:
+						//need to right back turn
+
+						right_backward_motor();                        
+						//car_state==CAR_STATE_MOVE_BACK;
+						break;
+				case 0x02:
+						//need to left back turn
+						left_backward_motor();                        
+						//car_state==CAR_STATE_MOVE_BACK;
+						break;
+				case 0x04:
+						//need to  
+						right_forward_motor();
+						//car_state==CAR_STATE_MOVE_FORWARD;
+						break;
+				case 0x08:
+						//nothing ahead
+						left_forward_motor();
+						//car_state==CAR_STATE_MOVE_FORWARD;
+						break;
+				case 0x03: /*front both sync detected.*/
+
+						if(distance[2]>distance[3])
+								left_backward_motor();
+						else
+								right_backward_motor();
+
+						//car_state==CAR_STATE_MOVE_BACK;
+						break;
+				case 0x05: /*left front and left back detected.*/
+
+						right_forward_motor();
+						//car_state==CAR_STATE_MOVE_FORWARD;
+						break;
+				case 0x06: /*right front and left back detected.*/
+
+						left_forward_motor();                        
+						//car_state==CAR_STATE_MOVE_FORWARD;
+						break;
+				case 0x07: /*only right back safe*/
+
+						right_backward_motor();                        
+						//car_state==CAR_STATE_MOVE_BACK;
+						break;
+				case 0x09: /*left front and right back detected.*/
+
+						right_forward_motor();                        
+						//car_state==CAR_STATE_MOVE_FORWARD;
+						break; 
+				case 0x0a: /*right front and right back detected.*/
+						left_forward_motor();                        
+						//car_state==CAR_STATE_MOVE_FORWARD;
+						break;
+				case 0x0b: /*only left back safe*/
+						left_backward_motor();                        
+						//car_state==CAR_STATE_MOVE_BACK;
+						break;
+				case 0x0c: /*back both sync detected.*/
+
+						if(distance[0]>distance[1])
+								left_forward_motor();
+						else
+								right_forward_motor();
+
+						//car_state==CAR_STATE_MOVE_FORWARD;
+						break;
+				case 0x0d:/*only right front safe*/
+						right_forward_motor();                            
+						//car_state==CAR_STATE_MOVE_FORWARD;
+						break;
+				case 0x0e:/*only left front safe*/          
+						left_forward_motor();                            
+						//car_state==CAR_STATE_MOVE_FORWARD;
+						break;
+				case 0x0f:
+						switch( search_maximum_index(distance,4)){
+								case 0://left forward
+										left_forward_motor();
+										break;
+								case 1://right forward
+										right_forward_motor();
+										break;
+								case 2://left backward
+										left_backward_motor();
+										break;
+								case 3://right backward
+										right_backward_motor();
+										break;
+						}
+						//car_state=CAR_STATE_MOVE_BOTH;
+						break;
+				default:
+						break;
+		}
+
 	}
 	else if(car_state==CAR_STATE_REST){
 		stop_motor();
@@ -189,11 +314,8 @@ void CarPolling(){
 		}
 			
 	}
-	else{
-		distance[0]=Get_CH1Distance();
-		distance[1]=Get_CH2Distance();
-		distance[2]=Get_CH3Distance();
-		distance[3]=Get_CH4Distance();
+	else{/*determine the moving is front or back.*/
+		
 		
 		if(car_state==CAR_STATE_MOVE_FORWARD){
 			if(distance[0]==0 || distance[1]==0){
@@ -289,6 +411,7 @@ void init_car(){
 	servo_init();
 	ultra_sound_init();
 	init_button();
+    
 	carTimers=xTimerCreate("Car",	 ( CAR_POLLING_PERIOD), pdTRUE, ( void * ) 1,  CarPolling	 );
 	xTimerStart( carTimers, 0 );
 }
@@ -316,7 +439,6 @@ void init_button(void){
     
         
 }
-
 
 
 
