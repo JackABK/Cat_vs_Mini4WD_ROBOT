@@ -102,7 +102,7 @@ void right_forward_motor(){
 void right_backward_motor(){
         /*forward and turn right small angle*/
 	servo_operate(3,SERVO_RIGHT_DEGREE);
-	forward_motor();
+	backward_motor();
 }
 
 void left_backward_motor(){
@@ -316,6 +316,7 @@ void init_button(void){
     
         
 }
+
 
 
 
