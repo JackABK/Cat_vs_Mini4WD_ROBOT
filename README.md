@@ -31,6 +31,24 @@ a very important one is the robot can not be tracked by the cat, therefore the r
 
 
 
+pictures:
+=============
+- There are some pictures by our testing :
+
+![ScreenShot](https://raw.githubusercontent.com/JackABK/Cat_vs_Mini4WD_ROBOT/9e91c81e1dead4eb22d94c6bfe3d32c918729ae7/pictures/IMG_2181.JPG)
+
+- The cat seem to be interested for the car
+
+![ScreenShot](https://raw.githubusercontent.com/JackABK/Cat_vs_Mini4WD_ROBOT/9e91c81e1dead4eb22d94c6bfe3d32c918729ae7/pictures/IMG_2175.JPG)
+
+- Lovely.
+
+![ScreenShot](https://raw.githubusercontent.com/JackABK/Cat_vs_Mini4WD_ROBOT/9e91c81e1dead4eb22d94c6bfe3d32c918729ae7/pictures/IMG_2190.JPG)
+
+- The new version of appearance for the car
+
+![ScreenShot](https://raw.githubusercontent.com/JackABK/Cat_vs_Mini4WD_ROBOT/9e91c81e1dead4eb22d94c6bfe3d32c918729ae7/pictures/IMG_3886.JPG)
+
 ## Final project demo
 [The Cat vs Mini 4WD ROBOT - Auto-avoidance the funny cat](http://www.youtube.com/watch?v=jW4jw-KjOlk)
 
